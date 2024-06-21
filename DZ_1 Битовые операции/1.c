@@ -6,7 +6,7 @@ int main() {
 
   printf("Enter a positive integer: ");
 
-  scanf("%i", &a);
+  scanf("%i", &a); //
 
   printf("It's binary form:\n");
 
