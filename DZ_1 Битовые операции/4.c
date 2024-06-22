@@ -18,9 +18,7 @@ int main() {
 
   a = (a & 0xFF00FFFF) | (b << 16);
 
-  printf("Final integer with changed third byte: \n");
-
-  printf("%i\n", a);
+  printf("Final integer with changed third byte: %i\n", a);
 
   return 0;
 }
