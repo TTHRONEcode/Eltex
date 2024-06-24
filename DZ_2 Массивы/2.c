@@ -18,7 +18,7 @@ int main() {
   printf("This array:\n");
 
   for (int i = 0; i < N; i++) {
-    array[i] = i + 1;
+    array[i] = i + 1; // заполнение массива начинаеся с 1
 
     printf("%i ", array[i]);
   }
@@ -26,11 +26,11 @@ int main() {
   printf("\nThis array but reversal:\n");
 
   for (int i = 0; i < N; i++) {
-    if (i < N / 2) {
-      buffer = array[i];
+    if (i < N / 2) { // когда заменена половина массива, дальше не менять
+      buffer = array[i]; // i элемент записывается в буффер
 
-      array[i] = array[N - i - 1];
-      array[N - i - 1] = buffer;
+      array[i] = array[N - i - 1]; // i элемент меняется на (последний - i)
+      array[N - i - 1] = buffer; // (последний - i) получает значение с буффера
     }
 
     printf("%i ", array[i]);
