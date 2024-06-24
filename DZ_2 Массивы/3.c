@@ -8,6 +8,16 @@
 #include <stdio.h>
 
 int main() {
+  int N;
+  int count = 1;
 
-  
-  return 0; }
+  printf("Enter a size of square matrix:\n");
+
+  scanf("%i", &N);
+
+  int matrix[N][N];
+
+  printf("This matrix:\n");
+
+  return 0;
+}
