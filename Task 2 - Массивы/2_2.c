@@ -6,12 +6,10 @@
 
 #include <stdio.h>
 
+#define N 5
+
 int main() {
-  int N, buffer;
-
-  printf("Enter a size of array:\n");
-
-  scanf("%i", &N);
+  int buffer;
 
   int array[N];
 
@@ -23,7 +21,7 @@ int main() {
     printf("%i ", array[i]);
   }
 
-  printf("\nThis array but reversal:\n");
+  printf("\nThe same array, but inverted:\n");
 
   for (int i = 0; i < N; i++) {
     if (i < N / 2) { // когда заменена половина массива, дальше не менять

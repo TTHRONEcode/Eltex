@@ -7,17 +7,16 @@
 
 #include <stdio.h>
 
+#define N 5
+
 int main() {
-  int N;
   int count = 1;
-
-  printf("Enter a size of square matrix:\n");
-
-  scanf("%i", &N);
 
   int matrix[N][N];
 
-  printf("This matrix:\n");
+  printf("The size of the square matrix is: %i\n", N);
+
+  printf("This matrix itself:\n");
 
   for (int i = 0; i < N; i++) {
     for (int j = 0; j < N; j++) {
