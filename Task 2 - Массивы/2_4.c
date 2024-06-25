@@ -8,83 +8,70 @@
 
 #include <stdio.h>
 
-#define N 6
+#define N 7
 
 int main() {
 
-  int matrix[N][N] = {0};
+  int matrix[N][N];
 
   int count = 1;
-  int lines = 0, columns = 0, spins = 0;
-  int divisible, digits = 0;
+  int lines = 0, columns, offset = 0;
+  int digits = 0, divisible = N * N;
 
-  printf("The size of the square matrix is: %i\nThe snail matrix itself:\n", N);
+  // Главный цикл заполнения
+  for (int i = 0; i < N / 2; i++) {
 
-  ///////////////////////
-
-  for (; columns < N - spins; columns++) {
-    matrix[lines][columns] = count;
-    count++;
-  }
-
-  columns--;
-  lines++;
-
-  ///////////////////////
-
-  while (spins < N / 2) {
-
-    for (; lines < N - spins; lines++) {
-      matrix[lines][columns] = count;
-      count++;
-    }
-
-    lines--;
-    columns--;
-
-    for (; columns >= spins; columns--) {
-      matrix[lines][columns] = count;
-      count++;
-    }
-
-    columns++;
-    lines--;
-
-    spins++;
-
-    for (; lines >= spins; lines--) {
-      matrix[lines][columns] = count;
-      count++;
-    }
-
-    lines++;
-    columns++;
-
-    for (; columns < N - spins; columns++) {
+    // горизонтальное заполнение вправо
+    for (columns = 0; columns < N - offset; columns++) {
       matrix[lines][columns] = count;
       count++;
     }
 
     columns--;
+
+    // вертикальное заполнение вниз
+    for (lines = offset + 1; lines < N - offset; lines++) {
+      matrix[lines][columns] = count;
+      count++;
+    }
+
+    lines--;
+
+    // горизонтальное заполнение влево
+    for (columns = N - offset - 1; columns >= offset; columns--) {
+      matrix[lines][columns] = count;
+      count++;
+    }
+
+    columns++;
+
+    offset++;
+
+    // вертикальное заполнение вверх
+    for (lines = N - offset - 1; lines >= offset; lines--) {
+      matrix[lines][columns] = count;
+      count++;
+    }
+
     lines++;
   }
 
-  ///////////////////////
+  // дозаполнение центрального элемента нечётной матрицы
+  if (N % 2 == 1)
+    matrix[lines][columns + 1] = count;
 
-  divisible = N * N;
-
-  do {
-    if (divisible > 10)
-      digits++;
+  // Подсчёт знаков для идеального вывода + выравнивания
+  while (divisible > 10) {
+    digits++;
     divisible /= 10;
+  }
 
-  } while (divisible > 10);
-
-  ///////////////////////
+  // Вывод в терминал
+  printf("The size of the square matrix is: %i\nThe snail matrix itself:\n", N);
 
   for (lines = 0; lines < N; lines++) {
     for (columns = 0; columns < N; columns++) {
-      printf("%-*i", digits + 2, matrix[lines][columns]);
+      printf("%*i", digits + 2, matrix[lines][columns]);
     }
     printf("\n");
   }
