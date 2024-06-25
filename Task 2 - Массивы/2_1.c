@@ -10,10 +10,18 @@
 #define N 5
 
 int main() {
+  int matrix[N][N];
   int count = 1;
 
-  int matrix[N][N];
+  int digits = 0, divisible = N * N;
 
+  // Подсчёт знаков для идеального вывода + выравнивания
+  while (divisible > 10) {
+    digits++;
+    divisible /= 10;
+  }
+
+  // Вывод в терминал
   printf("The size of the square matrix is: %i\nThe matrix itself:\n", N);
 
   for (int i = 0; i < N; i++) {
@@ -22,7 +30,7 @@ int main() {
 
       count++;
 
-      printf("%i\t", matrix[i][j]);
+      printf("%*i ", digits + 2, matrix[i][j]);
     }
     printf("\n");
   }

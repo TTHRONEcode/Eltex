@@ -9,9 +9,9 @@
 #define N 5
 
 int main() {
-  int buffer;
-
   int array[N];
+
+  int buffer;
 
   printf("This array:\n");
 

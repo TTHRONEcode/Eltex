@@ -13,9 +13,9 @@
 int main() {
 
   int matrix[N][N];
-
   int count = 1;
   int lines = 0, columns, offset = 0;
+
   int digits = 0, divisible = N * N;
 
   // Главный цикл заполнения
