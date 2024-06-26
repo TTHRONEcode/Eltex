@@ -15,7 +15,7 @@ int main() {
 
   printf("It's binary form:\n");
 
-  for (int i = 31; i >= 0; i--) {
+  for (int i = ((sizeof(a) * 8) - 1); i >= 0; i--) {
     printf("%i", (a >> i) & 1);
 
     if (i % 8 == 0) // это нужно чтобы были пробелы между 8 битами
