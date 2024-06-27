@@ -15,7 +15,7 @@ int main() {
   printf("Enter a positive integer fot third byte (0-255): \n");
   scanf("%i", &b);
 
-  ptr = ptr + 1;
+  ptr = ptr + 2;
   *ptr = b;
 
   printf("Final integer with changed third byte:\n%i\n", a);

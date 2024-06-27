@@ -19,15 +19,11 @@ int main() {
   scanf("%[^\n]%*c", word);
 
   for (int i = 0; i < 255; i++) {
-    if (word[i] == 0)
-      break;
-
-    char_count++;
-  }
-
-  for (int i = 0; i < 255; i++) {
     if (word[counter] == 0)
       break;
+
+    if (word[i] != 0)
+      char_count++;
 
     if (sentens[i] == word[counter]) {
       if (counter == 0)
@@ -53,8 +49,8 @@ int main() {
            "%p.\nStart index: %i\n",
            ptr, start_num);
   } else {
-    printf("The word was NOT found. The pointer address is set to NULL\n");
     ptr = NULL;
+    printf("The word was NOT found. The pointer address is set to NULL\n");
   }
 
   return 0;
