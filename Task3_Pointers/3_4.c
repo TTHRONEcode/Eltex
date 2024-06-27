@@ -5,39 +5,39 @@
 
 #include <stdio.h>
 
-char sentens[255], word[255];
-char *ptr;
-
-int counter, char_count, start_num;
+#define N 255
 
 int main() {
 
-  printf("Enter a sentens of several words (max character - 255):\n");
+  char sentens[N] = {0}, word[N] = {0};
+  char *ptr = NULL;
+
+  int counter = 0, char_count = 0, start_num = 0;
+  int i, j;
+
+  printf("Enter a sentens of several words (max character - %i):\n", N);
   scanf("%[^\n]%*c", sentens);
 
-  printf("Enter a word to find (max character - 255):\n");
+  printf("Enter a word to find (max character - %i):\n", N);
   scanf("%[^\n]%*c", word);
 
-  for (int i = 0; i < 255; i++) {
+  // TODO попробовать сделать через битовые операции
+  for (i = 0; i < N; i++) {
     if (word[counter] == 0)
       break;
 
     if (word[i] != 0)
       char_count++;
 
-    if (sentens[i] == word[counter]) {
-      if (counter == 0)
-        start_num = i;
-
-      counter++;
-    } else {
-      counter = 0;
-
+    for (j = 0; j < 2; j++) {
       if (sentens[i] == word[counter]) {
         if (counter == 0)
           start_num = i;
 
         counter++;
+        break;
+      } else {
+        counter = 0;
       }
     }
   }
