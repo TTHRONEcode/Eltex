@@ -3,7 +3,12 @@
 
 #define STRUCT_SIZE 100
 #define STRUCT_ELEMENTS_ARRAY_SIZE 10
-#define STRUCT_STRINGIFY(x) #x
+
+void ClearScanf() {
+  int c;
+  while ((c = fgetc(stdin)) != EOF && c != '\n')
+    ;
+}
 
 struct abonent {
   char name[STRUCT_ELEMENTS_ARRAY_SIZE];
@@ -27,12 +32,14 @@ int main() {
            "4) Вывод всех записей\n"
            "5) Выход\n");
     printf("*Выберите пункт меню: ");
-    scanf("%1d", &menu_num);
+    scanf("%7d", &menu_num);
+    ClearScanf();
 
     while (menu_num < 0 || menu_num > 5) {
       printf("\n*Нужно ввести число от 1 до 5!\n");
       printf("*Выберите пункт меню: ");
-      scanf("%1d", &menu_num);
+      scanf("%7d", &menu_num);
+      ClearScanf();
     }
     printf("\n");
 
@@ -43,16 +50,18 @@ int main() {
       if (free_directory != STRUCT_SIZE) {
         printf("*Введите имя абонента (%i символов): \n",
                STRUCT_ELEMENTS_ARRAY_SIZE);
-        scanf("%" STRUCT_STRINGIFY(STRUCT_ELEMENTS_ARRAY_SIZE) "s",
-              directory[free_directory].name);
+        scanf("%9s", directory[free_directory].name);
+        ClearScanf();
 
         printf("*Введите фамилию абонента (%i символов): \n",
                STRUCT_ELEMENTS_ARRAY_SIZE);
-        scanf("%s", directory[free_directory].second_name);
+        scanf("%9s", directory[free_directory].second_name);
+        ClearScanf();
 
         printf("*Введите телефон абонента (%i символов): \n",
                STRUCT_ELEMENTS_ARRAY_SIZE);
-        scanf("%s", directory[free_directory].tel);
+        scanf("%9s", directory[free_directory].tel);
+        ClearScanf();
 
         for (j = 0; j < STRUCT_SIZE; j++) {
           if (directory[j].name[0] == 0) {
@@ -74,7 +83,8 @@ int main() {
       printf("*2) Удаление абонента\n");
 
       printf("*Введите имя абонентов для удаления:\n");
-      scanf("%s", buffer_name);
+      scanf("%9s", buffer_name);
+      ClearScanf();
 
       was_changed = false;
 
@@ -104,7 +114,8 @@ int main() {
     case 3:
       printf("*3) Поиск абонентов по имени\n");
       printf("*Введите имя абонентов для поиска: ");
-      scanf("%s", buffer_name);
+      scanf("%9s", buffer_name);
+      ClearScanf();
 
       printf("*Найденые абоненты с именем %s:\n", buffer_name);
       for (i = 0; i < STRUCT_SIZE; i++) {
