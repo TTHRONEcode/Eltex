@@ -16,12 +16,11 @@ int main() {
   int i, j;
 
   printf("Enter a sentens of several words (max character - %i):\n", N);
-  scanf("%[^\n]%*c", sentens);
+  scanf("%254[^\n]%*c", sentens);
 
   printf("Enter a word to find (max character - %i):\n", N);
-  scanf("%[^\n]%*c", word);
+  scanf("%254[^\n]%*c", word);
 
-  // TODO попробовать сделать через битовые операции
   for (i = 0; i < N; i++) {
     if (word[counter] == 0)
       break;
