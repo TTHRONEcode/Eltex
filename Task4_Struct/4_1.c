@@ -47,7 +47,7 @@ int main() {
     case 1:
       printf("*1) Добавление абонента\n");
 
-      if (free_directory != STRUCT_SIZE) {
+      if (free_directory != -1) {
         printf("*Введите имя абонента (%i символов): \n",
                STRUCT_ELEMENTS_ARRAY_SIZE);
         scanf("%9s", directory[free_directory].name);
@@ -63,12 +63,17 @@ int main() {
         scanf("%9s", directory[free_directory].tel);
         ClearScanf();
 
+        was_changed = false;
         for (j = 0; j < STRUCT_SIZE; j++) {
           if (directory[j].name[0] == 0) {
             free_directory = j;
+            was_changed = true;
             break;
           }
         }
+
+        if (!was_changed)
+          free_directory = -1;
 
         printf("*Абонент успешно добавлен!\n");
       } else {
@@ -76,7 +81,6 @@ int main() {
                "*Для добавления необходимо удалить лишнего абонента из "
                "справочника.\n");
       }
-
       break;
 
     case 2:
@@ -90,9 +94,11 @@ int main() {
 
       for (i = 0; i < STRUCT_SIZE; i++) {
         if (*directory[i].name == *buffer_name) {
-          *directory[i].name = 0;
-          *directory[i].second_name = 0;
-          *directory[i].tel = 0;
+          for (j = 0; j < STRUCT_ELEMENTS_ARRAY_SIZE; j++) {
+            directory[i].name[j] = 0;
+            directory[i].second_name[j] = 0;
+            directory[i].tel[j] = 0;
+          }
 
           for (j = 0; j < STRUCT_SIZE; j++) {
             if (directory[j].name[0] == 0) {
@@ -108,7 +114,6 @@ int main() {
 
       if (!was_changed)
         printf("*Абонент с именем %s не найден.\n", buffer_name);
-
       break;
 
     case 3:
@@ -139,7 +144,6 @@ int main() {
       }
       if (!was_changed)
         printf("*Список пуст. Самое время добавить абонента!\n");
-
       break;
 
     default:
