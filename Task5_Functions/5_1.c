@@ -13,11 +13,10 @@ struct AbonentList {
   char tel[STRUCT_ELEMENTS_ARRAY_SIZE + 1];
 };
 
-static struct AbonentList directory[STRUCT_SIZE];
-
-char buffer_name[STRUCT_ELEMENTS_ARRAY_SIZE + 1];
-int free_directory, menu_num, i, j;
-bool was_changed, was_deleted;
+struct AbonentList directory[STRUCT_SIZE];
+char g_buffer_name[STRUCT_ELEMENTS_ARRAY_SIZE + 1];
+int g_free_directory, g_menu_num, g_i, g_j;
+bool g_was_changed, g_was_deleted;
 
 void UtilityClearScanf() {
   int c;
@@ -26,8 +25,8 @@ void UtilityClearScanf() {
 }
 
 void UtilityClearBuffer() {
-  for (i = 0; i < STRUCT_ELEMENTS_ARRAY_SIZE + 1; i++) {
-    buffer_name[i] = 0;
+  for (g_i = 0; g_i < STRUCT_ELEMENTS_ARRAY_SIZE + 1; g_i++) {
+    g_buffer_name[g_i] = 0;
   }
 }
 
@@ -35,33 +34,33 @@ void UtilityClearBuffer() {
 void DirectoryAdd() {
   printf("*1) Добавление абонента\n");
 
-  if (free_directory != -1) {
+  if (g_free_directory != -1) {
     printf("*Введите имя абонента (%i символов): \n",
            STRUCT_ELEMENTS_ARRAY_SIZE);
-    scanf("%10s", directory[free_directory].name);
+    scanf("%10s", directory[g_free_directory].name);
     UtilityClearScanf();
 
     printf("*Введите фамилию абонента (%i символов): \n",
            STRUCT_ELEMENTS_ARRAY_SIZE);
-    scanf("%10s", directory[free_directory].second_name);
+    scanf("%10s", directory[g_free_directory].second_name);
     UtilityClearScanf();
 
     printf("*Введите телефон абонента (%i символов): \n",
            STRUCT_ELEMENTS_ARRAY_SIZE);
-    scanf("%10s", directory[free_directory].tel);
+    scanf("%10s", directory[g_free_directory].tel);
     UtilityClearScanf();
 
-    was_changed = false;
-    for (j = 0; j < STRUCT_SIZE; j++) {
-      if (directory[j].name[0] == 0) {
-        free_directory = j;
-        was_changed = true;
+    g_was_changed = false;
+    for (g_j = 0; g_j < STRUCT_SIZE; g_j++) {
+      if (directory[g_j].name[0] == 0) {
+        g_free_directory = g_j;
+        g_was_changed = true;
         break;
       }
     }
 
-    if (!was_changed)
-      free_directory = -1;
+    if (!g_was_changed)
+      g_free_directory = -1;
 
     printf("*Абонент успешно добавлен!\n");
   } else {
@@ -78,42 +77,42 @@ void DirectoryDelete() {
 
   UtilityClearBuffer();
 
-  scanf("%10s", buffer_name);
+  scanf("%10s", g_buffer_name);
   UtilityClearScanf();
 
-  was_deleted = false;
-  for (i = 0; i < STRUCT_SIZE; i++) {
+  g_was_deleted = false;
+  for (g_i = 0; g_i < STRUCT_SIZE; g_i++) {
 
-    was_changed = true;
-    for (j = 0; j < STRUCT_ELEMENTS_ARRAY_SIZE; j++) {
-      if (directory[i].name[j] != buffer_name[j]) {
-        was_changed = false;
+    g_was_changed = true;
+    for (g_j = 0; g_j < STRUCT_ELEMENTS_ARRAY_SIZE; g_j++) {
+      if (directory[g_i].name[g_j] != g_buffer_name[g_j]) {
+        g_was_changed = false;
         break;
       }
     }
 
-    if (was_changed) {
-      for (j = 0; j < STRUCT_ELEMENTS_ARRAY_SIZE + 1; j++) {
-        directory[i].name[j] = 0;
-        directory[i].second_name[j] = 0;
-        directory[i].tel[j] = 0;
+    if (g_was_changed) {
+      for (g_j = 0; g_j < STRUCT_ELEMENTS_ARRAY_SIZE + 1; g_j++) {
+        directory[g_i].name[g_j] = 0;
+        directory[g_i].second_name[g_j] = 0;
+        directory[g_i].tel[g_j] = 0;
       }
 
-      was_deleted = true;
+      g_was_deleted = true;
 
-      printf("*Абонент №%3i %s был успешно удален.\n", i + 1, buffer_name);
+      printf("*Абонент №%3i %s был успешно удален.\n", g_i + 1, g_buffer_name);
 
-      for (j = 0; j < STRUCT_SIZE; j++) {
-        if (directory[j].name[0] == 0) {
-          free_directory = j;
+      for (g_j = 0; g_j < STRUCT_SIZE; g_j++) {
+        if (directory[g_j].name[0] == 0) {
+          g_free_directory = g_j;
           break;
         }
       }
     }
   }
 
-  if (!was_deleted)
-    printf("*Абонентов с именем %s не найдено.\n", buffer_name);
+  if (!g_was_deleted)
+    printf("*Абонентов с именем %s не найдено.\n", g_buffer_name);
 }
 
 // 3) Поиск абонентов по имени
@@ -123,21 +122,21 @@ void DirectoryFind() {
 
   UtilityClearBuffer();
 
-  scanf("%10s", buffer_name);
+  scanf("%10s", g_buffer_name);
   UtilityClearScanf();
 
-  printf("*Найденые абоненты с именем %s:\n", buffer_name);
-  for (i = 0; i < STRUCT_SIZE; i++) {
-    was_changed = true;
-    for (j = 0; j < STRUCT_ELEMENTS_ARRAY_SIZE; j++) {
-      if (directory[i].name[j] != buffer_name[j]) {
-        was_changed = false;
+  printf("*Найденые абоненты с именем %s:\n", g_buffer_name);
+  for (g_i = 0; g_i < STRUCT_SIZE; g_i++) {
+    g_was_changed = true;
+    for (g_j = 0; g_j < STRUCT_ELEMENTS_ARRAY_SIZE; g_j++) {
+      if (directory[g_i].name[g_j] != g_buffer_name[g_j]) {
+        g_was_changed = false;
         break;
       }
     }
-    if (was_changed) {
-      printf("№%3i. %s %s, тел.: %s\n", i + 1, directory[i].name,
-             directory[i].second_name, directory[i].tel);
+    if (g_was_changed) {
+      printf("№%3i. %s %s, тел.: %s\n", g_i + 1, directory[g_i].name,
+             directory[g_i].second_name, directory[g_i].tel);
     }
   }
 }
@@ -145,16 +144,16 @@ void DirectoryFind() {
 // 4) Вывод всех записей
 void DirectoryPrint() {
   printf("*4) Вывод всех записей:\n");
-  was_changed = false;
+  g_was_changed = false;
 
-  for (i = 0; i < STRUCT_SIZE; i++) {
-    if (directory[i].name[0] != 0) {
-      was_changed = true;
-      printf("№%3i. %s %s, тел.: %s\n", i + 1, directory[i].name,
-             directory[i].second_name, directory[i].tel);
+  for (g_i = 0; g_i < STRUCT_SIZE; g_i++) {
+    if (directory[g_i].name[0] != 0) {
+      g_was_changed = true;
+      printf("№%3i. %s %s, тел.: %s\n", g_i + 1, directory[g_i].name,
+             directory[g_i].second_name, directory[g_i].tel);
     }
   }
-  if (!was_changed)
+  if (!g_was_changed)
     printf("*Список пуст. Самое время добавить абонента!\n");
 }
 
@@ -166,8 +165,8 @@ void DirectoryExit() {
 
 // Меню
 void DirectoryMenu() {
-  while (menu_num != 5) {
-    menu_num = -1;
+  while (g_menu_num != 5) {
+    g_menu_num = -1;
     printf("\n*Абонентский справочник*\n*Меню:\n"
            "1) Добавить абонента\n"
            "2) Удалить абонента\n"
@@ -175,18 +174,18 @@ void DirectoryMenu() {
            "4) Вывод всех записей\n"
            "5) Выход\n");
     printf("*Выберите пункт меню: ");
-    scanf("%1d", &menu_num);
+    scanf("%1d", &g_menu_num);
     UtilityClearScanf();
 
-    while (menu_num < 0 || menu_num > 5) {
+    while (g_menu_num < 0 || g_menu_num > 5) {
       printf("\n*Нужно ввести число от 1 до 5!\n");
       printf("*Выберите пункт меню: ");
-      scanf("%1d", &menu_num);
+      scanf("%1d", &g_menu_num);
       UtilityClearScanf();
     }
     printf("\n");
 
-    switch (menu_num) {
+    switch (g_menu_num) {
     case 1:
       DirectoryAdd();
       break;
