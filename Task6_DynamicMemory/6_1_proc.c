@@ -1,8 +1,11 @@
+#include <errno.h>
+#include <limits.h>
+#include <malloc.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#define STRUCT_SIZE 100
 #define STRUCT_ELEMENTS_ARRAY_SIZE 10
 
 enum { ADD = 1, DELETE, SEARCH, PRINT_ALL, EXIT };
@@ -13,9 +16,10 @@ struct AbonentList {
   char tel[STRUCT_ELEMENTS_ARRAY_SIZE];
 };
 
-struct AbonentList directory[STRUCT_SIZE];
+struct AbonentList *directory = NULL;
+
 char g_buffer_name[STRUCT_ELEMENTS_ARRAY_SIZE + 1];
-int g_free_directory, g_i, g_j;
+int g_free_directory, i, j;
 bool g_was_changed, g_was_detected;
 
 void Proc_ClearScanf() {
@@ -25,30 +29,27 @@ void Proc_ClearScanf() {
 }
 
 void Proc_ClearBuffer() {
-  for (g_i = 0; g_i < STRUCT_ELEMENTS_ARRAY_SIZE + 1; g_i++) {
-    g_buffer_name[g_i] = 0;
+  for (i = 0; i < STRUCT_ELEMENTS_ARRAY_SIZE + 1; i++) {
+    g_buffer_name[i] = 0;
   }
-}
-
-void Proc_FindFreeSpace() {
-  g_was_changed = false;
-  for (g_j = 0; g_j < STRUCT_SIZE; g_j++) {
-    if (directory[g_j].name[0] == 0) {
-      g_free_directory = g_j;
-      g_was_changed = true;
-      break;
-    }
-  }
-
-  if (!g_was_changed)
-    g_free_directory = -1;
 }
 
 // Добавление абонента
 void Proc_DirAdd() {
   printf("*%d) Добавление абонента\n", ADD);
 
-  if (g_free_directory != -1) {
+  // free(directory); TODO
+
+  if (g_free_directory != -1 && g_free_directory != INT_MAX) {
+
+    directory =
+        realloc(directory, (g_free_directory + 1) * sizeof(struct AbonentList));
+    for (i = 0; i < STRUCT_ELEMENTS_ARRAY_SIZE; i++) {
+      directory[g_free_directory].name[i] = 0;
+      directory[g_free_directory].second_name[i] = 0;
+      directory[g_free_directory].tel[i] = 0;
+    }
+
     printf("*Введите имя абонента (%i символов): \n",
            STRUCT_ELEMENTS_ARRAY_SIZE);
     scanf("%10s", directory[g_free_directory].name);
@@ -64,9 +65,9 @@ void Proc_DirAdd() {
     scanf("%10s", directory[g_free_directory].tel);
     Proc_ClearScanf();
 
-    Proc_FindFreeSpace();
-
     printf("*Абонент успешно добавлен!\n");
+    g_free_directory++;
+
   } else {
     printf("*Невозможно добавить абонента: нет свободных полей.\n"
            "*Для добавления необходимо удалить лишнего абонента из "
@@ -82,35 +83,33 @@ void Proc_DirDelete() {
   Proc_ClearBuffer();
 
   scanf("%10s", g_buffer_name);
+  Proc_ClearScanf();
 
   g_was_detected = false;
-  for (g_i = 0; g_i < STRUCT_SIZE; g_i++) {
+  for (i = 0; i < g_free_directory; i++) {
 
     g_was_changed = true;
-    for (g_j = 0; g_j < STRUCT_ELEMENTS_ARRAY_SIZE; g_j++) {
-      if (directory[g_i].name[g_j] != g_buffer_name[g_j]) {
+    for (j = 0; j < STRUCT_ELEMENTS_ARRAY_SIZE; j++) {
+      if (directory[i].name[j] != g_buffer_name[j]) {
         g_was_changed = false;
         break;
       }
     }
 
     if (g_was_changed) {
-      for (g_j = 0; g_j < STRUCT_ELEMENTS_ARRAY_SIZE; g_j++) {
-        directory[g_i].name[g_j] = 0;
-        directory[g_i].second_name[g_j] = 0;
-        directory[g_i].tel[g_j] = 0;
+      for (j = i; j < STRUCT_ELEMENTS_ARRAY_SIZE; j++) {
+        directory[i].name[j] = directory[g_free_directory - 1].name[j];
+        directory[i].second_name[j] =
+            directory[g_free_directory - 1].second_name[j];
+        directory[i].tel[j] = directory[g_free_directory - 1].tel[j];
       }
 
+      g_free_directory--;
+      directory =
+          realloc(directory, (g_free_directory) * sizeof(struct AbonentList));
       g_was_detected = true;
 
-      printf("*Абонент №%3i %s был успешно удален.\n", g_i + 1, g_buffer_name);
-
-      for (g_j = 0; g_j < STRUCT_SIZE; g_j++) {
-        if (directory[g_j].name[0] == 0) {
-          g_free_directory = g_j;
-          break;
-        }
-      }
+      printf("*Абонент №%3i %s был успешно удален.\n", i + 1, g_buffer_name);
     }
   }
 
@@ -128,18 +127,21 @@ void Proc_DirSearch() {
   scanf("%10s", g_buffer_name);
   Proc_ClearScanf();
 
+  g_was_detected = false;
   printf("*Найденые абоненты с именем %s:\n", g_buffer_name);
-  for (g_i = 0; g_i < STRUCT_SIZE; g_i++) {
+  for (i = 0; i < g_free_directory; i++) {
     g_was_changed = true;
-    for (g_j = 0; g_j < STRUCT_ELEMENTS_ARRAY_SIZE; g_j++) {
-      if (directory[g_i].name[g_j] != g_buffer_name[g_j]) {
+    for (j = 0; j < STRUCT_ELEMENTS_ARRAY_SIZE; j++) {
+      if (directory[i].name[j] != g_buffer_name[j]) {
         g_was_changed = false;
+
         break;
       }
     }
     if (g_was_changed) {
-      printf("№%3i. %s %s, тел.: %s\n", g_i + 1, directory[g_i].name,
-             directory[g_i].second_name, directory[g_i].tel);
+      g_was_detected = true;
+      printf("№%3i. %s %s, тел.: %s\n", i + 1, directory[i].name,
+             directory[i].second_name, directory[i].tel);
     }
   }
 
@@ -153,11 +155,11 @@ void Proc_DirPrintAll() {
 
   g_was_changed = false;
 
-  for (g_i = 0; g_i < STRUCT_SIZE; g_i++) {
-    if (directory[g_i].name[0] != 0) {
+  for (i = 0; i < g_free_directory; i++) {
+    if (directory[i].name[0] != 0) {
       g_was_changed = true;
-      printf("№%3i. %s %s, тел.: %s\n", g_i + 1, directory[g_i].name,
-             directory[g_i].second_name, directory[g_i].tel);
+      printf("№%3i. %s %s, тел.: %s\n", i + 1, directory[i].name,
+             directory[i].second_name, directory[i].tel);
     }
   }
   if (!g_was_changed)

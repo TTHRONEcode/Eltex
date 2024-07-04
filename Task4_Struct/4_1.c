@@ -33,9 +33,9 @@ void ClearScanf() {
 }
 
 struct abonent {
-  char name[STRUCT_ELEMENTS_ARRAY_SIZE + 1];
-  char second_name[STRUCT_ELEMENTS_ARRAY_SIZE + 1];
-  char tel[STRUCT_ELEMENTS_ARRAY_SIZE + 1];
+  char name[STRUCT_ELEMENTS_ARRAY_SIZE];
+  char second_name[STRUCT_ELEMENTS_ARRAY_SIZE];
+  char tel[STRUCT_ELEMENTS_ARRAY_SIZE];
 };
 
 int main() {
@@ -43,7 +43,7 @@ int main() {
   char buffer_name[STRUCT_ELEMENTS_ARRAY_SIZE + 1] = {0};
 
   int free_directory = 0, menu_num = 0, i, j;
-  bool was_changed, was_deleted;
+  bool was_changed, was_detected;
 
   while (menu_num != 5) {
     menu_num = -1;
@@ -117,7 +117,7 @@ int main() {
       scanf("%10s", buffer_name);
       ClearScanf();
 
-      was_deleted = false;
+      was_detected = false;
       for (i = 0; i < STRUCT_SIZE; i++) {
 
         was_changed = true;
@@ -129,13 +129,13 @@ int main() {
         }
 
         if (was_changed) {
-          for (j = 0; j < STRUCT_ELEMENTS_ARRAY_SIZE + 1; j++) {
+          for (j = 0; j < STRUCT_ELEMENTS_ARRAY_SIZE; j++) {
             directory[i].name[j] = 0;
             directory[i].second_name[j] = 0;
             directory[i].tel[j] = 0;
           }
 
-          was_deleted = true;
+          was_detected = true;
 
           printf("*Абонент №%3i %s был успешно удален.\n", i + 1, buffer_name);
 
@@ -148,7 +148,7 @@ int main() {
         }
       }
 
-      if (!was_deleted)
+      if (!was_detected)
         printf("*Абонентов с именем %s не найдено.\n", buffer_name);
       break;
 
@@ -161,6 +161,7 @@ int main() {
       scanf("%10s", buffer_name);
       ClearScanf();
 
+      was_detected = false;
       printf("*Найденые абоненты с именем %s:\n", buffer_name);
       for (i = 0; i < STRUCT_SIZE; i++) {
         was_changed = true;
@@ -171,10 +172,14 @@ int main() {
           }
         }
         if (was_changed) {
+          was_detected = true;
           printf("№%3i. %s %s, тел.: %s\n", i + 1, directory[i].name,
                  directory[i].second_name, directory[i].tel);
         }
       }
+      if (!was_detected)
+        printf("*А-н нет, абонентов с именем %s не найдено.\n", buffer_name);
+
       break;
 
     case 4:
