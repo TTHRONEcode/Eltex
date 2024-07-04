@@ -40,7 +40,8 @@ void Proc_SafeRealloc(int __realloc_size) {
       reallocarray(directory, __realloc_size, sizeof(struct AbonentList));
 
   if (directory == NULL)
-    err(EXIT_FAILURE, "Realloc's null!\nLine: %d", __LINE__);
+    err(EXIT_FAILURE, "Realloc's NULL!\nLine: %d\n", __LINE__);
+  // проверка из man malloc
 }
 
 // Добавление абонента
