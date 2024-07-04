@@ -1,4 +1,4 @@
-#include <errno.h>
+#include <err.h>
 #include <limits.h>
 #include <malloc.h>
 #include <stdbool.h>
@@ -17,6 +17,7 @@ struct AbonentList {
 };
 
 struct AbonentList *directory = NULL;
+char *ptr_errno;
 
 char g_buffer_name[STRUCT_ELEMENTS_ARRAY_SIZE + 1];
 int g_free_directory, i, j;
@@ -34,16 +35,21 @@ void Proc_ClearBuffer() {
   }
 }
 
+void Proc_SafeRealloc(int __realloc_size) {
+  directory =
+      reallocarray(directory, __realloc_size, sizeof(struct AbonentList));
+
+  if (directory == NULL)
+    err(EXIT_FAILURE, "Realloc's null!\nLine: %d", __LINE__);
+}
+
 // Добавление абонента
 void Proc_DirAdd() {
   printf("*%d) Добавление абонента\n", ADD);
 
-  // free(directory); TODO
-
   if (g_free_directory != -1 && g_free_directory != INT_MAX) {
 
-    directory =
-        realloc(directory, (g_free_directory + 1) * sizeof(struct AbonentList));
+    Proc_SafeRealloc(g_free_directory + 1);
     for (i = 0; i < STRUCT_ELEMENTS_ARRAY_SIZE; i++) {
       directory[g_free_directory].name[i] = 0;
       directory[g_free_directory].second_name[i] = 0;
@@ -105,8 +111,7 @@ void Proc_DirDelete() {
       }
 
       g_free_directory--;
-      directory =
-          realloc(directory, (g_free_directory) * sizeof(struct AbonentList));
+      Proc_SafeRealloc(g_free_directory);
       g_was_detected = true;
 
       printf("*Абонент №%3i %s был успешно удален.\n", i + 1, g_buffer_name);
@@ -128,7 +133,7 @@ void Proc_DirSearch() {
   Proc_ClearScanf();
 
   g_was_detected = false;
-  printf("*Найденые абоненты с именем %s:\n", g_buffer_name);
+  // printf("*Найденые абоненты с именем %s:\n", g_buffer_name);
   for (i = 0; i < g_free_directory; i++) {
     g_was_changed = true;
     for (j = 0; j < STRUCT_ELEMENTS_ARRAY_SIZE; j++) {
@@ -146,7 +151,7 @@ void Proc_DirSearch() {
   }
 
   if (!g_was_detected)
-    printf("*А-н нет, абонентов с именем %s не найдено.\n", g_buffer_name);
+    printf("*Абонентов с именем %s не найдено.\n", g_buffer_name);
 }
 
 //  Вывод всех записей
