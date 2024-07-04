@@ -1,5 +1,3 @@
-
-
 void Proc_ClearScanf();
 void Proc_ClearBuffer();
 void Proc_SafeRealloc(int);
