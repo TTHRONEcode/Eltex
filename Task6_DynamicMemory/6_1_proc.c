@@ -1,11 +1,6 @@
-#ifndef INCLUDE_PROC
-
 #ifndef INCLUDE_STD
-
 #define INCLUDE_STD
-#include "6_1_enum.h"
 #include <stdio.h>
-
 #endif
 
 #include <err.h>
@@ -14,7 +9,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#define INCLUDE_PROC
+#include "6_1_enum.h"
+
 #define STRUCT_ELEMENTS_ARRAY_SIZE 10
 
 struct AbonentList {
@@ -187,4 +183,3 @@ void Proc_DirExit() {
 
   exit(0);
 }
-#endif

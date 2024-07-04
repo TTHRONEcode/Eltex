@@ -1,14 +1,12 @@
+#include "6_1_enum.h"
 #include "6_1_proc.h"
 
 #ifndef INCLUDE_STD
-
 #define INCLUDE_STD
-#include "6_1_enum.h"
 #include <stdio.h>
-
 #endif
 
-int g_menu_num; //
+int g_menu_num;
 
 // Меню
 void Std_DirectoryMenu() {
