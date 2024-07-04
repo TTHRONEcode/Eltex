@@ -1,6 +1,7 @@
 #ifndef INCLUDE_PROC
 
 #include <err.h>
+#include <errno.h>
 #include <limits.h>
 #include <malloc.h>
 #include <stdbool.h>
@@ -19,7 +20,7 @@ struct AbonentList {
 };
 
 struct AbonentList *directory = NULL;
-char *ptr_errno;
+char *ptr_errno = NULL;
 
 char g_buffer_name[STRUCT_ELEMENTS_ARRAY_SIZE + 1];
 int g_free_directory, i, j;
@@ -177,6 +178,10 @@ void Proc_DirPrintAll() {
 // Выход
 void Proc_DirExit() {
   printf("*%d) Выход\n*Выходим...\n", EXIT);
+
+  free(directory);
+  directory = NULL;
+
   exit(0);
 }
 #endif
