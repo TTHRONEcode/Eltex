@@ -1,11 +1,13 @@
+#ifndef INCLUDE_PROC
+
 #include <err.h>
 #include <limits.h>
 #include <malloc.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#define INCLUDE_PROC
 #define STRUCT_ELEMENTS_ARRAY_SIZE 10
 
 enum { ADD = 1, DELETE, SEARCH, PRINT_ALL, EXIT };
@@ -177,3 +179,4 @@ void Proc_DirExit() {
   printf("*%d) Выход\n*Выходим...\n", EXIT);
   exit(0);
 }
+#endif
