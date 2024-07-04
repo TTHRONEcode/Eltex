@@ -1,17 +1,21 @@
 #ifndef INCLUDE_PROC
 
+#ifndef INCLUDE_STD
+
+#define INCLUDE_STD
+#include "6_1_enum.h"
+#include <stdio.h>
+
+#endif
+
 #include <err.h>
-#include <errno.h>
 #include <limits.h>
 #include <malloc.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #define INCLUDE_PROC
 #define STRUCT_ELEMENTS_ARRAY_SIZE 10
-
-enum { ADD = 1, DELETE, SEARCH, PRINT_ALL, EXIT };
 
 struct AbonentList {
   char name[STRUCT_ELEMENTS_ARRAY_SIZE];
@@ -38,9 +42,8 @@ void Proc_ClearBuffer() {
   }
 }
 
-void Proc_SafeRealloc(int __realloc_size) {
-  directory =
-      reallocarray(directory, __realloc_size, sizeof(struct AbonentList));
+void Proc_SafeRealloc(int realloc_size) {
+  directory = reallocarray(directory, realloc_size, sizeof(struct AbonentList));
 
   if (directory == NULL)
     err(EXIT_FAILURE, "Realloc's NULL!\nLine: %d\n", __LINE__);
