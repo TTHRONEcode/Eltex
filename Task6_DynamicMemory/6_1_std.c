@@ -1,6 +1,6 @@
 #include "6_1_proc.c"
 
-int g_menu_num;
+int g_menu_num;//
 
 // Меню
 void Std_DirectoryMenu() {
