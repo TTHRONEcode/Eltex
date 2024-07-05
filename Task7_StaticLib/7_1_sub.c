@@ -1,0 +1,1 @@
+long Calc_Proc_Sub(long a, long b) { return (a - b); }
