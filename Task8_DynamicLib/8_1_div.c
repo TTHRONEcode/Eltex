@@ -1,0 +1,1 @@
+long Calc_Proc_Div(long a, long b) { return (a / b); }
