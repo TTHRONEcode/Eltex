@@ -1,4 +1,4 @@
-#include "8_1_calc_func.h"
+#include "8_1_calc_func.h"//
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
