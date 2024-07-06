@@ -21,7 +21,7 @@ long Calc_Std_In(char letter) {
     scanf("%20ld", &number);
     Std_ClearScanf();
 
-    if (number >= LONG_MAX) {
+    if (number >= INT_MAX) {
       printf("*Введено слишком большое число! (>= %d)\n"
              "*Нужно ввести число поменьше\n\n",
              INT_MAX);
@@ -31,7 +31,7 @@ long Calc_Std_In(char letter) {
              INT_MIN);
     }
 
-  } while (number >= LONG_MAX || number <= LONG_MIN);
+  } while (number >= INT_MAX || number <= INT_MIN);
 
   return number;
 }
