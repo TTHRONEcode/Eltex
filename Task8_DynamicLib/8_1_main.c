@@ -1,9 +1,26 @@
-#include "8_1_calc_func.h"//
+#include "8_1_calc_func.h"
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-enum { ADD = 1, SUB, MUL, DIV, EXIT };
+enum { ADD, MUL, DIV, EXIT, SUB };
+
+struct CalcFuncsBook {
+  int num;
+  char name[256];
+  char expression[256];
+  long (*func)(long, long);
+};
+
+struct CalcFuncsBook Calc_Funcs[5] = {
+    {ADD, "Сложение", "a + b", Calc_Proc_Add}, /////
+    {SUB, "Вычитание", "a - b", Calc_Proc_Sub},
+    {MUL, "Умножение", "a * b", Calc_Proc_Mul},
+    {DIV, "Деление", "a / b", Calc_Proc_Div},
+    {EXIT, "Выход", "Выходим...", NULL}};
+int g_max_num = sizeof(Calc_Funcs) / sizeof(Calc_Funcs[0]);
+
+void Calc_Exit() { exit(0); };
 
 void Std_ClearScanf() {
   int c;
@@ -22,13 +39,13 @@ long Calc_Std_In(char letter) {
     Std_ClearScanf();
 
     if (number >= INT_MAX) {
-      printf("*Введено слишком большое число! (>= %d)\n"
+      printf("*Это число за гранью дозволенного! (%c >= %d)\n"
              "*Нужно ввести число поменьше\n\n",
-             INT_MAX);
+             letter, INT_MAX);
     } else if (number <= INT_MIN) {
-      printf("*Введено слишком маленькое число! (<= %d)\n"
+      printf("*Это число слишком микроскопическое! (%c <= %d)\n"
              "*Нужно ввести число побольше\n\n",
-             INT_MIN);
+             letter, INT_MIN);
     }
 
   } while (number >= INT_MAX || number <= INT_MIN);
@@ -37,51 +54,27 @@ long Calc_Std_In(char letter) {
 }
 
 void Calc_Std_Out(int calc_num) {
-  long number_a = 0, number_b = 0;
+  long number_a, number_b;
 
   printf("*%d) ", calc_num);
+  calc_num--;
+  for (int i = 0; i < g_max_num; i++) {
+    if (Calc_Funcs[i].num == calc_num) {
 
-  for (int i = 0; i < 2; i++) {
-    switch (calc_num) {
-    case ADD:
-      if (i == 0)
-        printf("Сложение c = (a + b)\n");
-      else
-        printf("%ld\n", Calc_Proc_Add(number_a, number_b));
-      break;
+      if (calc_num != EXIT) {
 
-    case SUB:
-      if (i == 0)
-        printf("Вычитание c = (a - b)\n");
-      else
-        printf("%ld\n", Calc_Proc_Sub(number_a, number_b));
-      break;
+        printf("%s c = %s\n", Calc_Funcs[i].name, Calc_Funcs[i].expression);
 
-    case MUL:
-      if (i == 0)
-        printf("Умножение c = (a * b)\n");
-      else
-        printf("%ld\n", Calc_Proc_Mul(number_a, number_b));
-      break;
+        number_a = Calc_Std_In('a');
+        number_b = Calc_Std_In('b');
 
-    case DIV:
-      if (i == 0)
-        printf("Деление c = (a / b)\n");
-      else
-        printf("%ld\n", Calc_Proc_Div(number_a, number_b));
-      break;
+        printf("\n*Результат:\n*c = ");
 
-    case EXIT:
-      printf("Выход\n*Выходим...\n");
-      exit(0);
-      break;
-    }
-
-    if (i == 0) {
-      number_a = Calc_Std_In('a');
-      number_b = Calc_Std_In('b');
-
-      printf("\n*Результат:\n*c = ");
+        printf("%ld\n", Calc_Funcs[i].func(number_a, number_b));
+      } else {
+        printf("%s\n*%s\n", Calc_Funcs[i].name, Calc_Funcs[i].expression);
+        Calc_Exit();
+      }
     }
   }
 }
@@ -89,23 +82,29 @@ void Calc_Std_Out(int calc_num) {
 void Calc_Menu() {
   int menu_num;
 
-  while (menu_num != EXIT) {
-    printf("\n*Калькулятор*\n\n"
-           "%d) Сложение\n"
-           "%d) Вычитание\n"
-           "%d) Умножение\n"
-           "%d) Деление\n"
-           "%d) Выход\n",
-           ADD, SUB, MUL, DIV, EXIT);
-    printf("*Выберите пункт меню: ");
-    scanf("%1d", &menu_num);
+  while (1) {
+    printf("\n*Калькулятор\n\n");
+    for (int i = 0; i < g_max_num; i++) {
+      for (int j = 0; j < g_max_num; j++) {
+        if (Calc_Funcs[j].num == i) {
+          printf("%d) %s\n", i + 1, Calc_Funcs[j].name);
+          break;
+        }
+      }
+    }
+
+    printf("\n*Выберите пункт меню: ");
+    scanf("%9d", &menu_num);
     Std_ClearScanf();
 
-    while (menu_num < ADD || menu_num > EXIT) {
-      printf("\n*Нужно ввести число от 1 до 5!\n");
+    while (menu_num < 1 ||
+           menu_num > (sizeof(Calc_Funcs) / sizeof(Calc_Funcs[0]))) {
+      printf("\n*Нужно ввести число от "
+             "1 до %d!\n",
+             EXIT);
       printf("*Выберите пункт меню: ");
       scanf("%1d", &menu_num);
-        Std_ClearScanf();
+      Std_ClearScanf();
     }
     printf("\n");
 
