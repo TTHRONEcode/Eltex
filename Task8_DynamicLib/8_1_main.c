@@ -12,23 +12,23 @@ struct CalcFuncsBook {
   long (*func)(long, long);
 };
 
-struct CalcFuncsBook Calc_Funcs[5] = {
-    {ADD, "Сложение", "a + b", Calc_Proc_Add}, /////
-    {SUB, "Вычитание", "a - b", Calc_Proc_Sub},
-    {MUL, "Умножение", "a * b", Calc_Proc_Mul},
-    {DIV, "Деление", "a / b", Calc_Proc_Div},
+struct CalcFuncsBook CalcFuncs[5] = {
+    {ADD, "Сложение", "a + b", CalcProcAdd}, /////
+    {SUB, "Вычитание", "a - b", CalcProcSub},
+    {MUL, "Умножение", "a * b", CalcProcMul},
+    {DIV, "Деление", "a / b", CalcProcDiv},
     {EXIT, "Выход", "Выходим...", NULL}};
-int g_max_num = sizeof(Calc_Funcs) / sizeof(Calc_Funcs[0]);
+int g_max_num = sizeof(CalcFuncs) / sizeof(CalcFuncs[0]);
 
-void Calc_Exit() { exit(0); };
+void CalcExit() { exit(0); };
 
-void Std_ClearScanf() {
+void Util_ClearScanf() {
   int c;
   while ((c = fgetc(stdin)) != EOF && c != '\n')
     ;
 }
 
-long Calc_Std_In(char letter) {
+long CalcStdIn(char letter) {
 
   long number = 0;
 
@@ -36,7 +36,7 @@ long Calc_Std_In(char letter) {
     printf("*Введите число %c:\n*%c = ", letter, letter);
 
     scanf("%20ld", &number);
-    Std_ClearScanf();
+    Util_ClearScanf();
 
     if (number >= INT_MAX) {
       printf("*Это число за гранью дозволенного! (%c >= %d)\n"
@@ -53,41 +53,41 @@ long Calc_Std_In(char letter) {
   return number;
 }
 
-void Calc_Std_Out(int calc_num) {
+void CalcStdOut(int calc_num) {
   long number_a, number_b;
 
   printf("*%d) ", calc_num);
   calc_num--;
   for (int i = 0; i < g_max_num; i++) {
-    if (Calc_Funcs[i].num == calc_num) {
+    if (CalcFuncs[i].num == calc_num) {
 
       if (calc_num != EXIT) {
 
-        printf("%s c = %s\n", Calc_Funcs[i].name, Calc_Funcs[i].expression);
+        printf("%s c = %s\n", CalcFuncs[i].name, CalcFuncs[i].expression);
 
-        number_a = Calc_Std_In('a');
-        number_b = Calc_Std_In('b');
+        number_a = CalcStdIn('a');
+        number_b = CalcStdIn('b');
 
         printf("\n*Результат:\n*c = ");
 
-        printf("%ld\n", Calc_Funcs[i].func(number_a, number_b));
+        printf("%ld\n", CalcFuncs[i].func(number_a, number_b));
       } else {
-        printf("%s\n*%s\n", Calc_Funcs[i].name, Calc_Funcs[i].expression);
-        Calc_Exit();
+        printf("%s\n*%s\n", CalcFuncs[i].name, CalcFuncs[i].expression);
+        CalcExit();
       }
     }
   }
 }
 
-void Calc_Menu() {
+void CalcMenu() {
   int menu_num;
 
   while (1) {
     printf("\n*Калькулятор\n\n");
     for (int i = 0; i < g_max_num; i++) {
       for (int j = 0; j < g_max_num; j++) {
-        if (Calc_Funcs[j].num == i) {
-          printf("%d) %s\n", i + 1, Calc_Funcs[j].name);
+        if (CalcFuncs[j].num == i) {
+          printf("%d) %s\n", i + 1, CalcFuncs[j].name);
           break;
         }
       }
@@ -95,26 +95,26 @@ void Calc_Menu() {
 
     printf("\n*Выберите пункт меню: ");
     scanf("%9d", &menu_num);
-    Std_ClearScanf();
+    Util_ClearScanf();
 
     while (menu_num < 1 ||
-           menu_num > (sizeof(Calc_Funcs) / sizeof(Calc_Funcs[0]))) {
+           menu_num > (sizeof(CalcFuncs) / sizeof(CalcFuncs[0]))) {
       printf("\n*Нужно ввести число от "
              "1 до %d!\n",
              EXIT);
       printf("*Выберите пункт меню: ");
       scanf("%1d", &menu_num);
-      Std_ClearScanf();
+      Util_ClearScanf();
     }
     printf("\n");
 
-    Calc_Std_Out(menu_num);
+    CalcStdOut(menu_num);
   }
 }
 
 int main() {
 
-  Calc_Menu();
+  CalcMenu();
 
   return 0;
 }
