@@ -1,5 +1,4 @@
 #include <dirent.h>
-#include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,8 +28,6 @@ static int TypeAlphaSort(const struct dirent **e_1, const struct dirent **e_2) {
   return c;
 }
 
-void AAA() {}
-
 static void FindAbsDir() { // TODO сделать обработку ВСЕХ ошибок
   ino_t this_dir_inode[20] = {0};
   char loc_name[10000] = {0};
@@ -47,48 +44,37 @@ static void FindAbsDir() { // TODO сделать обработку ВСЕХ о
 
     count = scandir(loc_name, &dp, NULL, TypeAlphaSort);
 
-    for (int i = 1; i < count; i++) {
-      if (this_dir_inode[inode_num] == dp[i]->d_ino) {
-
-        // char_num += strlen(dp[i]->d_name);
-        // strncpy(name + strlen(dp[i]->d_name) + 1, name, char_num);
-
-        // name[strlen(dp[i]->d_name)] = '/';
-        // // strncpy(name + strlen(dp[i]->d_name), "/", 2);
-
-        // strncpy(name, dp[i]->d_name, strlen(dp[i]->d_name));
-
-        break;
-      }
-    }
-
   } while (this_dir_inode[inode_num] != dp[0]->d_ino);
+
   name[0] = '/';
   for (int i = inode_num - 1; i >= 0; i--) {
     count = scandir(name, &dp, NULL, TypeAlphaSort);
     for (int j = 0; j < count; j++) {
 
       if (this_dir_inode[i] == dp[j]->d_ino) {
-        strcat(name, dp[j]->d_name);
         strcat(name, "/");
+        strcat(name, dp[j]->d_name);
+
         break;
       }
     }
   }
 
-  // strcat(name, loc_name);
-
-  // strcat(name, ".");
-
-  // ./..
-  // ./
-  // ./9_2
+  count = scandir(name, &dp, NULL, TypeAlphaSort);
 }
 
 void PrintDir() {
   FindAbsDir();
 
-  ChList(0, count, dp, name);
+  ChList(0, count, &dp, name);
 
   // free(dp); // TODO
+}
+
+void EnterDir(char *dir) {
+  strcat(name, "/");
+  strcat(name, dir);
+
+  count = scandir(name, &dp, NULL, TypeAlphaSort);
+  ChList(0, count, &dp, name);
 }
