@@ -5,76 +5,81 @@
 
 #include "./9_2_graphic.h"
 
-char name[80000] = {0}; // TODO заменить это нечто на malloc
-struct dirent **dp;
-int count;
+char g_cur_dir_name[80000] = {0}; // TODO заменить это нечто на malloc
+struct dirent **g_dirents;
+int g_count;
 
-static int TypeAlphaSort(const struct dirent **e_1, const struct dirent **e_2) {
-  int c = 0;
+static int TypeAlphaSort(const struct dirent **p_e_1,
+                         const struct dirent **p_e_2) {
+  int l_c = 0;
 
-  if ((*e_1)->d_type == DT_DIR) {
-    if ((*e_2)->d_type == DT_DIR)
-      c = strcoll((*e_1)->d_name, (*e_2)->d_name);
+  if ((*p_e_1)->d_type == DT_DIR) {
+    if ((*p_e_2)->d_type == DT_DIR)
+      l_c = strcoll((*p_e_1)->d_name, (*p_e_2)->d_name);
     else
-      c = -1;
+      l_c = -1;
 
   } else {
-    if ((*e_2)->d_type != DT_DIR)
-      c = strcoll((*e_1)->d_name, (*e_2)->d_name);
+    if ((*p_e_2)->d_type != DT_DIR)
+      l_c = strcoll((*p_e_1)->d_name, (*p_e_2)->d_name);
     else
-      c = 1;
+      l_c = 1;
   }
 
-  return c;
+  return l_c;
 }
 
 static void FindAbsDir() { // TODO сделать обработку ВСЕХ ошибок
-  ino_t this_dir_inode[20] = {0};
-  char loc_name[10000] = {0};
-  int inode_num = -1;
+  ino_t l_this_dir_inode[20] = {0};
+  char l_loc_name[10000] = {0};
+  int l_inode_num = -1;
 
-  strcat(loc_name, ".");
-  count = scandir(loc_name, &dp, NULL, TypeAlphaSort);
+  strcat(l_loc_name, ".");
+  g_count = scandir(l_loc_name, &g_dirents, NULL, TypeAlphaSort);
 
   do {
-    inode_num++;
-    this_dir_inode[inode_num] = dp[0]->d_ino;
+    l_inode_num++;
+    l_this_dir_inode[l_inode_num] = g_dirents[0]->d_ino;
 
-    strcat(loc_name, "/..");
+    strcat(l_loc_name, "/..");
 
-    count = scandir(loc_name, &dp, NULL, TypeAlphaSort);
+    g_count = scandir(l_loc_name, &g_dirents, NULL, TypeAlphaSort);
 
-  } while (this_dir_inode[inode_num] != dp[0]->d_ino);
+  } while (l_this_dir_inode[l_inode_num] != g_dirents[0]->d_ino);
 
-  name[0] = '/';
-  for (int i = inode_num - 1; i >= 0; i--) {
-    count = scandir(name, &dp, NULL, TypeAlphaSort);
-    for (int j = 0; j < count; j++) {
-
-      if (this_dir_inode[i] == dp[j]->d_ino) {
-        strcat(name, "/");
-        strcat(name, dp[j]->d_name);
+  g_cur_dir_name[0] = '/';
+  for (int i = l_inode_num - 1; i >= 0; i--) {
+    g_count = scandir(g_cur_dir_name, &g_dirents, NULL, TypeAlphaSort);
+    for (int j = 0; j < g_count; j++) {
+      if (l_this_dir_inode[i] == g_dirents[j]->d_ino) {
+        strcat(g_cur_dir_name, g_dirents[j]->d_name);
+        strcat(g_cur_dir_name, "/");
 
         break;
       }
     }
   }
 
-  count = scandir(name, &dp, NULL, TypeAlphaSort);
+  g_cur_dir_name[strlen(g_cur_dir_name)] = 0;
+  g_count = scandir(g_cur_dir_name, &g_dirents, NULL, TypeAlphaSort);
 }
 
 void PrintDir() {
-  FindAbsDir();
+  // FindAbsDir();
+  g_cur_dir_name[0] = '/';
+  g_count = scandir(g_cur_dir_name, &g_dirents, NULL, TypeAlphaSort);
 
-  ChList(0, count, &dp, name);
+  ChDirList(0, g_count, &g_dirents, g_cur_dir_name);
+  ChHeaderDirStr(0, g_cur_dir_name);
 
   // free(dp); // TODO
 }
 
-void EnterDir(char *dir) {
-  strcat(name, "/");
-  strcat(name, dir);
+void EnterDir(char *p_dir) {
+  strcat(g_cur_dir_name, "/");
+  strcat(g_cur_dir_name, p_dir);
 
-  count = scandir(name, &dp, NULL, TypeAlphaSort);
-  ChList(0, count, &dp, name);
+  g_count = scandir(g_cur_dir_name, &g_dirents, NULL, TypeAlphaSort);
+  ChDirList(0, g_count, &g_dirents, g_cur_dir_name);
+  ChHeaderDirStr(0, g_cur_dir_name);
 }
