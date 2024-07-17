@@ -10,13 +10,15 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <termios.h>
+#include <time.h>
 
 struct dirent **g_dir_lists[2];
 
 WINDOW *g_headers_wnd[3], *g_windows_wnd[2];
 const char *g_header_main_str = "TotalBlack Commander";
 char *g_cur_dir_left = "aaaaaaaaa"; // TODO remove
-int g_list_el_count = 0;
+int g_list_el_count, g_cursor_pos;
+
 static void SigWinCh(int p_signo) {
   struct winsize l_size;
   ioctl(fileno(stdout), TIOCGWINSZ, (char *)&l_size);
@@ -31,7 +33,7 @@ static void InitWnds() {
   getmaxyx(stdscr, row, col);
   case_wnd = newwin(row, col, 0, 0);
   wattron(case_wnd, COLOR_PAIR(1));
-  mvwprintw(case_wnd, 0, (col - strlen(g_header_main_str) - 1) / 2 - 1, " %s ",
+  mvwprintw(case_wnd, 0, (col - strlen(g_header_main_str) - 2) / 2 - 1, " %s ",
             g_header_main_str);
   g_headers_wnd[0] = case_wnd;
   ////////
@@ -96,22 +98,23 @@ void ChHeaderDirStr(int p_num, char *p_str_in) {
   // werase(l_loc_header);
   wattron(l_loc_header, COLOR_PAIR(1) | A_BOLD);
 
-  mvwprintw(l_loc_header, 0, (l_col - strlen(l_str_out) - 1) / 2, " %s ",
+  mvwprintw(l_loc_header, 0, (l_col - strlen(l_str_out)) / 2 - 1, " %s ",
             l_str_out);
 
-  wrefresh(l_loc_header);
+  // wrefresh(l_loc_header);
 
   // ChWnwLook(0, COLOR_PAIR(1) | A_BOLD);
 
   free(l_str_out);
 }
 
-void ChDirList(int p_num, int p_count, struct dirent ***p_list,
-               char *p_cur_dir) {
+void ChDirList(int p_num, int p_count, struct dirent ***p_list, char *p_cur_dir,
+               int p_cursor_pos) {
 
   WINDOW *l_window = g_windows_wnd[p_num];
   g_list_el_count = p_count;
   g_dir_lists[p_num] = *p_list;
+  g_cursor_pos = p_cursor_pos;
 
   werase(l_window);
   wattron(l_window, COLOR_PAIR(1) | A_BOLD);
@@ -119,57 +122,64 @@ void ChDirList(int p_num, int p_count, struct dirent ***p_list,
 
   // refresh();
 
-  wrefresh(l_window);
+  // wrefresh(l_window);
 }
 
 int MenuManager() {
   int l_row, l_col, l_cur_menu_id, l_input, l_dp_count = g_list_el_count,
                                             l_need_reset;
   MENU *l_my_menu = NULL;
-  ITEM **my_item = NULL;
+  ITEM **l_item = NULL, *l_item_need = NULL;
 
   while (l_input != 'q') {
-    l_cur_menu_id = 0, l_input = 0, l_dp_count = g_list_el_count,
+    l_cur_menu_id = g_cursor_pos - 1, l_input = 0, l_dp_count = g_list_el_count,
     l_need_reset = 0;
 
     getmaxyx(g_windows_wnd[0], l_row, l_col);
 
-    my_item = (ITEM **)calloc(l_dp_count, sizeof(ITEM *));
-
-    char **full_item_str = calloc(l_dp_count, sizeof(char *));
+    l_item = (ITEM **)calloc(l_dp_count, sizeof(ITEM *));
+    char **l_item_str_w_type = calloc(l_dp_count, sizeof(char *));
 
     for (int i = 1; i < l_dp_count; i++) {
-      full_item_str[i] =
+      l_item_str_w_type[i] =
           calloc(strlen(g_dir_lists[0][i]->d_name) + 2, sizeof(char));
 
-      full_item_str[i][0] = g_dir_lists[0][i]->d_type == DT_DIR ? '/' : ' ';
-      strcat(full_item_str[i], g_dir_lists[0][i]->d_name);
-
-      my_item[i - 1] = new_item(full_item_str[i], "");
+      l_item_str_w_type[i][0] = g_dir_lists[0][i]->d_type == DT_DIR ? '/' : ' ';
+      strcat(l_item_str_w_type[i], g_dir_lists[0][i]->d_name);
+      l_item[i - 1] = new_item(l_item_str_w_type[i], "");
     }
     // my_item[l_dp_count] = NULL;
 
-    l_my_menu = new_menu((ITEM **)my_item);
+    l_my_menu = new_menu((ITEM **)l_item);
     set_menu_format(l_my_menu, l_row - 2, 1);
     set_menu_win(l_my_menu, g_windows_wnd[0]);
     set_menu_sub(l_my_menu,
-                 derwin(g_windows_wnd[0], l_row - 1, l_col - 1, 1, 1));
+                 derwin(g_windows_wnd[0], l_row - 1, l_col - 2, 1, 1));
     set_menu_mark(l_my_menu, "");
     post_menu(l_my_menu);
 
+    set_current_item(l_my_menu, l_item[l_cur_menu_id]);
+
     while (l_need_reset != 1) {
+      wchgat(g_windows_wnd[0], l_col - 2, A_REVERSE, 1, NULL);
       wrefresh(g_windows_wnd[0]);
+
       l_input = getch();
+
       switch (l_input) {
       case KEY_DOWN:
+        wchgat(g_windows_wnd[0], l_col - 2, A_NORMAL, 1, NULL);
         menu_driver(l_my_menu, REQ_DOWN_ITEM);
         if (l_cur_menu_id < g_list_el_count - 2)
           l_cur_menu_id++;
+
         break;
       case KEY_UP:
+        wchgat(g_windows_wnd[0], l_col - 2, A_NORMAL, 1, NULL);
         menu_driver(l_my_menu, REQ_UP_ITEM);
         if (l_cur_menu_id > 0)
           l_cur_menu_id--;
+
         break;
 
       case 'e':
@@ -187,12 +197,12 @@ int MenuManager() {
     }
 
     for (int i = 0; i < l_dp_count; i++) {
-      free(full_item_str[i]);
+      free(l_item_str_w_type[i]);
     }
-    free(full_item_str);
+    free(l_item_str_w_type);
     for (int i = 0; i < l_dp_count - 1; i++) {
 
-      free_item(my_item[i]);
+      free_item(l_item[i]);
     }
   }
 

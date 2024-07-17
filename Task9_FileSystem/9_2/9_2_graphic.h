@@ -5,7 +5,8 @@ void GraphicShow();
 int MenuManager();
 
 #include <dirent.h>
-void ChDirList(int, int, struct dirent ***, char *);
+#include <menu.h>
+void ChDirList(int, int, struct dirent ***, char *, int);
 void ChHeaderDirStr(int, char *);
 
 #endif

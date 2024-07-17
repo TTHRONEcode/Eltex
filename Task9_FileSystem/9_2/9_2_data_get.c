@@ -1,4 +1,6 @@
+
 #include <dirent.h>
+#include <menu.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,26 +62,50 @@ static void FindAbsDir() { // TODO сделать обработку ВСЕХ о
     }
   }
 
-  g_cur_dir_name[strlen(g_cur_dir_name)] = 0;
+  g_cur_dir_name[strlen(g_cur_dir_name) - 1] = 0;
   g_count = scandir(g_cur_dir_name, &g_dirents, NULL, TypeAlphaSort);
 }
 
 void PrintDir() {
-  // FindAbsDir();
-  g_cur_dir_name[0] = '/';
-  g_count = scandir(g_cur_dir_name, &g_dirents, NULL, TypeAlphaSort);
+  FindAbsDir();
+  // g_cur_dir_name[0] = '/';
+  // g_count = scandir(g_cur_dir_name, &g_dirents, NULL, TypeAlphaSort);
 
-  ChDirList(0, g_count, &g_dirents, g_cur_dir_name);
+  ChDirList(0, g_count, &g_dirents, g_cur_dir_name, 1);
   ChHeaderDirStr(0, g_cur_dir_name);
 
   // free(dp); // TODO
 }
 
 void EnterDir(char *p_dir) {
-  strcat(g_cur_dir_name, "/");
-  strcat(g_cur_dir_name, p_dir);
+  unsigned long l_item_ino = 0;
+  int l_need_pos = 1;
+
+  if (strcmp(p_dir, "..") == 0) {
+    int l_strlen = 0;
+    while (g_cur_dir_name[(l_strlen = strlen(g_cur_dir_name) - 1)] != '/') {
+      g_cur_dir_name[l_strlen] = 0;
+    }
+    if (l_strlen == 0)
+      g_cur_dir_name[0] = '/';
+    else
+      g_cur_dir_name[l_strlen] = 0;
+
+    l_item_ino = g_dirents[0]->d_ino;
+  } else {
+    if (g_cur_dir_name[strlen(g_cur_dir_name) - 1] != '/')
+      strcat(g_cur_dir_name, "/");
+
+    strcat(g_cur_dir_name, p_dir);
+  }
 
   g_count = scandir(g_cur_dir_name, &g_dirents, NULL, TypeAlphaSort);
-  ChDirList(0, g_count, &g_dirents, g_cur_dir_name);
+
+  for (int i = 0; i < g_count; i++) {
+    if (l_item_ino == g_dirents[i]->d_ino)
+      l_need_pos = i;
+  }
+
+  ChDirList(0, g_count, &g_dirents, g_cur_dir_name, l_need_pos);
   ChHeaderDirStr(0, g_cur_dir_name);
 }
