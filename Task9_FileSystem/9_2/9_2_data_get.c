@@ -82,6 +82,8 @@ void EnterDir(char *p_dir) {
   int l_need_pos = 1;
 
   if (strcmp(p_dir, "..") == 0) {
+    l_item_ino = g_dirents[0]->d_ino;
+
     int l_strlen = 0;
     while (g_cur_dir_name[(l_strlen = strlen(g_cur_dir_name) - 1)] != '/') {
       g_cur_dir_name[l_strlen] = 0;
@@ -91,7 +93,6 @@ void EnterDir(char *p_dir) {
     else
       g_cur_dir_name[l_strlen] = 0;
 
-    l_item_ino = g_dirents[0]->d_ino;
   } else {
     if (g_cur_dir_name[strlen(g_cur_dir_name) - 1] != '/')
       strcat(g_cur_dir_name, "/");

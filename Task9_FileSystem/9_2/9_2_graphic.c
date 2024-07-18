@@ -126,14 +126,15 @@ void ChDirList(int p_num, int p_count, struct dirent ***p_list, char *p_cur_dir,
 }
 
 int MenuManager() {
-  int l_row, l_col, l_cur_menu_id, l_input, l_dp_count = g_list_el_count,
-                                            l_need_reset;
+  int l_row, l_col, l_cur_menu_id, l_input,
+      l_dp_count = g_list_el_count, l_need_reset, l_max_vis_item, l_max_item,
+      l_cur_vis_menu_id, l_min_vis_item;
   MENU *l_my_menu = NULL;
   ITEM **l_item = NULL, *l_item_need = NULL;
 
   while (l_input != 'q') {
-    l_cur_menu_id = g_cursor_pos - 1, l_input = 0, l_dp_count = g_list_el_count,
-    l_need_reset = 0;
+    l_cur_menu_id = g_cursor_pos - 1, l_dp_count = g_list_el_count, l_input = 0,
+    l_need_reset = 0, l_max_vis_item = 0, l_min_vis_item = 0;
 
     getmaxyx(g_windows_wnd[0], l_row, l_col);
 
@@ -160,25 +161,81 @@ int MenuManager() {
 
     set_current_item(l_my_menu, l_item[l_cur_menu_id]);
 
+    l_max_item = item_count(l_my_menu);
+
+    l_max_vis_item = l_row - 2;
+    if (l_max_vis_item > l_max_item)
+      l_max_vis_item = l_max_item;
+
+    if (l_cur_menu_id < l_max_vis_item)
+      l_cur_vis_menu_id = l_cur_menu_id;
+    else {
+      if (l_cur_menu_id > (l_max_item - l_max_vis_item)) {
+        l_cur_vis_menu_id = l_max_vis_item - (l_max_item - l_cur_menu_id);
+      } else {
+        l_cur_vis_menu_id = 0;
+      }
+
+      l_min_vis_item = l_cur_vis_menu_id + l_cur_menu_id;
+    }
+
     while (l_need_reset != 1) {
-      wchgat(g_windows_wnd[0], l_col - 2, A_REVERSE, 1, NULL);
+
+      for (int i = 0; i < l_max_vis_item; i++) {
+        if (i != l_cur_vis_menu_id) {
+          if (g_dir_lists[0][i + 1 + l_min_vis_item]->d_type == DT_DIR) {
+            mvwchgat(g_windows_wnd[0], i + 1, 1, l_col - 2, A_BOLD, 2, NULL);
+          } else {
+            mvwchgat(g_windows_wnd[0], i + 1, 1, l_col - 2, A_NORMAL, 1, NULL);
+          }
+        } else {
+
+          if (g_dir_lists[0][i + 1 + l_min_vis_item]->d_type == DT_DIR) {
+            mvwchgat(g_windows_wnd[0], i + 1, 1, l_col - 2, A_BOLD | A_REVERSE,
+                     2, NULL);
+          } else {
+            mvwchgat(g_windows_wnd[0], i + 1, 1, l_col - 2, A_REVERSE, 1, NULL);
+          }
+        }
+      }
+
       wrefresh(g_windows_wnd[0]);
 
       l_input = getch();
 
       switch (l_input) {
       case KEY_DOWN:
-        wchgat(g_windows_wnd[0], l_col - 2, A_NORMAL, 1, NULL);
+        // wchgat(g_windows_wnd[0], l_col - 2, A_NORMAL, 1, NULL);
         menu_driver(l_my_menu, REQ_DOWN_ITEM);
-        if (l_cur_menu_id < g_list_el_count - 2)
+        if (l_cur_menu_id < l_dp_count - 2) {
           l_cur_menu_id++;
+
+          if (l_cur_menu_id < l_max_vis_item) {
+            l_cur_vis_menu_id++;
+          } else {
+            if (l_cur_vis_menu_id + 1 < l_max_vis_item)
+              l_cur_vis_menu_id++;
+            else
+              l_min_vis_item++;
+          }
+        }
 
         break;
       case KEY_UP:
-        wchgat(g_windows_wnd[0], l_col - 2, A_NORMAL, 1, NULL);
+        // wchgat(g_windows_wnd[0], l_col - 2, A_NORMAL, 1, NULL);
         menu_driver(l_my_menu, REQ_UP_ITEM);
-        if (l_cur_menu_id > 0)
+        if (l_cur_menu_id > 0) {
           l_cur_menu_id--;
+
+          if (l_cur_menu_id >= l_min_vis_item) {
+            l_cur_vis_menu_id--;
+          } else {
+            if (l_cur_menu_id - 1 >= l_min_vis_item)
+              l_cur_vis_menu_id--;
+            else
+              l_min_vis_item--;
+          }
+        }
 
         break;
 
@@ -231,7 +288,7 @@ void GraphicShow() {
 
   start_color();
   init_pair(1, COLOR_WHITE, COLOR_BLACK);
-  init_pair(2, COLOR_RED, COLOR_BLACK);
+  init_pair(2, COLOR_BLUE, COLOR_BLACK);
 
   keypad(stdscr, TRUE);
 
