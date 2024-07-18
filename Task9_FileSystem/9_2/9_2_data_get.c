@@ -9,7 +9,8 @@
 
 char g_cur_dir_name[80000] = {0}; // TODO заменить это нечто на malloc
 struct dirent **g_dirents;
-int g_count;
+int g_count, g_bef_fold_num;
+char g_bef_fold_name[20][20];
 
 static int TypeAlphaSort(const struct dirent **p_e_1,
                          const struct dirent **p_e_2) {
@@ -77,9 +78,9 @@ void PrintDir() {
   // free(dp); // TODO
 }
 
-void EnterDir(char *p_dir) {
+void EnterDir(char *p_dir, int p_cur_item) {
   unsigned long l_item_ino = 0;
-  int l_need_pos = 1;
+  int l_need_pos = 1, l_need_name_search = 1;
 
   if (strcmp(p_dir, "..") == 0) {
     l_item_ino = g_dirents[0]->d_ino;
@@ -94,6 +95,9 @@ void EnterDir(char *p_dir) {
       g_cur_dir_name[l_strlen] = 0;
 
   } else {
+    g_bef_fold_num++;
+    strcpy(g_bef_fold_name[g_bef_fold_num], g_dirents[p_cur_item]->d_name);
+
     if (g_cur_dir_name[strlen(g_cur_dir_name) - 1] != '/')
       strcat(g_cur_dir_name, "/");
 
@@ -102,9 +106,36 @@ void EnterDir(char *p_dir) {
 
   g_count = scandir(g_cur_dir_name, &g_dirents, NULL, TypeAlphaSort);
 
-  for (int i = 0; i < g_count; i++) {
-    if (l_item_ino == g_dirents[i]->d_ino)
+  for (int i = 1; i < g_count; i++) {
+    if (l_item_ino == g_dirents[i]->d_ino) {
       l_need_pos = i;
+      l_need_name_search = 0;
+      // if (strcmp(p_dir, "..") == 0) {
+      //   for (int j = 0; j < strlen(g_bef_fold_name[g_bef_fold_num]); j++)
+      //   {
+      //     g_bef_fold_name[g_bef_fold_num][j] = 0;
+      //   }
+      // }
+
+      for (int j = 0; j < strlen(g_bef_fold_name[g_bef_fold_num]); j++) {
+        g_bef_fold_name[g_bef_fold_num][j] = 0;
+      }
+      g_bef_fold_num--;
+
+      break;
+    }
+  }
+  if (l_need_name_search == 1) {
+    for (int i = 0; i < g_count; i++) {
+      if (strcmp(g_bef_fold_name[g_bef_fold_num], g_dirents[i]->d_name) == 0) {
+        g_bef_fold_num--;
+        l_need_pos = i;
+        for (int j = 0; j < strlen(g_bef_fold_name[g_bef_fold_num]); j++) {
+          g_bef_fold_name[g_bef_fold_num][j] = 0;
+        }
+        break;
+      }
+    }
   }
 
   ChDirList(0, g_count, &g_dirents, g_cur_dir_name, l_need_pos);

@@ -2,5 +2,5 @@
 #define INCLUDE_DATA_GET
 void PrintDir();
 
-void EnterDir(char *);
+void EnterDir(char *, int);
 #endif

@@ -15,9 +15,9 @@
 struct dirent **g_dir_lists[2];
 
 WINDOW *g_headers_wnd[3], *g_windows_wnd[2];
-const char *g_header_main_str = "TotalBlack Commander";
+const char *k_g_header_main_str = "TotalBlack Commander";
 char *g_cur_dir_left = "aaaaaaaaa"; // TODO remove
-int g_list_el_count, g_cursor_pos;
+int g_list_el_count, g_cursor_pos, g_active_head_num;
 
 static void SigWinCh(int p_signo) {
   struct winsize l_size;
@@ -33,14 +33,14 @@ static void InitWnds() {
   getmaxyx(stdscr, row, col);
   case_wnd = newwin(row, col, 0, 0);
   wattron(case_wnd, COLOR_PAIR(1));
-  mvwprintw(case_wnd, 0, (col - strlen(g_header_main_str) - 2) / 2 - 1, " %s ",
-            g_header_main_str);
+  mvwprintw(case_wnd, 0, (col - strlen(k_g_header_main_str) - 2) / 2, " %s ",
+            k_g_header_main_str);
   g_headers_wnd[0] = case_wnd;
   ////////
 
   // Left Block
   getmaxyx(g_headers_wnd[0], row, col);
-  case_wnd = derwin(g_headers_wnd[0], row - 1, (col) / 2, 1, 0);
+  case_wnd = derwin(g_headers_wnd[0], row - 1, (col) / 2 + 1, 1, 0);
   wattron(case_wnd, COLOR_PAIR(1));
   box(case_wnd, ACS_VLINE, ACS_HLINE);
   g_windows_wnd[0] = case_wnd;
@@ -55,7 +55,7 @@ static void InitWnds() {
 
   // Right
   getmaxyx(g_headers_wnd[0], row, col);
-  case_wnd = derwin(g_headers_wnd[0], row - 1, (col) / 2 + 1, 1, col / 2 - 1);
+  case_wnd = derwin(g_headers_wnd[0], row - 1, (col + 1) / 2, 1, (col) / 2);
   wattron(case_wnd, COLOR_PAIR(1));
   box(case_wnd, ACS_VLINE, ACS_HLINE);
   g_windows_wnd[1] = case_wnd;
@@ -125,6 +125,27 @@ void ChDirList(int p_num, int p_count, struct dirent ***p_list, char *p_cur_dir,
   // wrefresh(l_window);
 }
 
+void ColorMenuItems(int p_max_vis_item, int p_cur_vis_menu_id,
+                    int p_min_vis_item, int p_col) {
+  for (int i = 0; i < p_max_vis_item; i++) {
+    if (i != p_cur_vis_menu_id) {
+      if (g_dir_lists[0][i + 1 + p_min_vis_item]->d_type == DT_DIR) {
+        mvwchgat(g_windows_wnd[0], i + 1, 1, p_col - 2, A_BOLD, 2, NULL);
+      } else {
+        mvwchgat(g_windows_wnd[0], i + 1, 1, p_col - 2, A_NORMAL, 1, NULL);
+      }
+    } else {
+
+      if (g_dir_lists[0][i + 1 + p_min_vis_item]->d_type == DT_DIR) {
+        mvwchgat(g_windows_wnd[0], i + 1, 1, p_col - 2, A_BOLD | A_REVERSE, 2,
+                 NULL);
+      } else {
+        mvwchgat(g_windows_wnd[0], i + 1, 1, p_col - 2, A_REVERSE, 1, NULL);
+      }
+    }
+  }
+}
+
 int MenuManager() {
   int l_row, l_col, l_cur_menu_id, l_input,
       l_dp_count = g_list_el_count, l_need_reset, l_max_vis_item, l_max_item,
@@ -149,7 +170,6 @@ int MenuManager() {
       strcat(l_item_str_w_type[i], g_dir_lists[0][i]->d_name);
       l_item[i - 1] = new_item(l_item_str_w_type[i], "");
     }
-    // my_item[l_dp_count] = NULL;
 
     l_my_menu = new_menu((ITEM **)l_item);
     set_menu_format(l_my_menu, l_row - 2, 1);
@@ -180,24 +200,7 @@ int MenuManager() {
     }
 
     while (l_need_reset != 1) {
-
-      for (int i = 0; i < l_max_vis_item; i++) {
-        if (i != l_cur_vis_menu_id) {
-          if (g_dir_lists[0][i + 1 + l_min_vis_item]->d_type == DT_DIR) {
-            mvwchgat(g_windows_wnd[0], i + 1, 1, l_col - 2, A_BOLD, 2, NULL);
-          } else {
-            mvwchgat(g_windows_wnd[0], i + 1, 1, l_col - 2, A_NORMAL, 1, NULL);
-          }
-        } else {
-
-          if (g_dir_lists[0][i + 1 + l_min_vis_item]->d_type == DT_DIR) {
-            mvwchgat(g_windows_wnd[0], i + 1, 1, l_col - 2, A_BOLD | A_REVERSE,
-                     2, NULL);
-          } else {
-            mvwchgat(g_windows_wnd[0], i + 1, 1, l_col - 2, A_REVERSE, 1, NULL);
-          }
-        }
-      }
+      ColorMenuItems(l_max_vis_item, l_cur_vis_menu_id, l_min_vis_item, l_col);
 
       wrefresh(g_windows_wnd[0]);
 
@@ -241,7 +244,8 @@ int MenuManager() {
 
       case 'e':
         if (g_dir_lists[0][l_cur_menu_id + 1]->d_type == DT_DIR) {
-          EnterDir(g_dir_lists[0][l_cur_menu_id + 1]->d_name);
+          EnterDir(g_dir_lists[0][l_cur_menu_id + 1]->d_name,
+                   l_cur_menu_id + 1);
           l_need_reset = 1;
         }
         break;
