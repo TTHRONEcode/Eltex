@@ -9,7 +9,7 @@
 char g_cur_dir_name[2][1000]; // TODO заменить это нечто на malloc
 struct dirent **g_dirents[2];
 int g_count[2], g_bef_fold_num[2];
-char g_bef_fold_name[2][20][20];
+char g_bef_fold_name[2][200][200];
 
 static int g_dir_n;
 
