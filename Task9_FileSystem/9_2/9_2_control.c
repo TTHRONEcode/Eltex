@@ -3,11 +3,15 @@
 #include <curses.h>
 // #include <stdio.h>
 // #include <stdlib.h>
-
-static int a;
+// #include <stdlib.h>
 
 void CommanderControl() {
   GraphicShow();
   PrintDir();
+  // getchar();
   MenuManager();
+
+  // getchar();
+  // endwin();
+  // exit(EXIT_SUCCESS);
 }
