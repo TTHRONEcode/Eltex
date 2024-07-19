@@ -8,5 +8,6 @@ int MenuManager();
 #include <menu.h>
 void ChDirList(int, int, struct dirent ***, char *, int);
 void ChHeaderDirStr(int, char *);
+void SigWinCh(int);
 
 #endif

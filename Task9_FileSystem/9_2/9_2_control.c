@@ -9,6 +9,7 @@ void CommanderControl() {
   GraphicShow();
   PrintDir();
   // getchar();
+  // SigWinCh(0);
   MenuManager();
 
   // getchar();
