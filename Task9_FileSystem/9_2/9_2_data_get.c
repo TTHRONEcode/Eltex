@@ -6,10 +6,10 @@
 
 #include "./9_2_graphic.h"
 
-char g_cur_dir_name[2][1000]; // TODO заменить это нечто на malloc
+char *g_cur_dir_name[2];
 struct dirent **g_dirents[2];
-int g_count[2], g_bef_fold_num[2];
-char g_bef_fold_name[2][200][200];
+int g_dir_count[2], g_bef_fold_num[2];
+char **g_bef_fold_name[2];
 
 static int g_dir_n;
 
@@ -39,7 +39,7 @@ static void FindAbsDir() { // TODO сделать обработку ВСЕХ о
   int l_inode_num = -1;
 
   strcat(l_loc_name, ".");
-  g_count[g_dir_n] =
+  g_dir_count[g_dir_n] =
       scandir(l_loc_name, &g_dirents[g_dir_n], NULL, TypeAlphaSort);
 
   do {
@@ -48,16 +48,16 @@ static void FindAbsDir() { // TODO сделать обработку ВСЕХ о
 
     strcat(l_loc_name, "/..");
 
-    g_count[g_dir_n] =
+    g_dir_count[g_dir_n] =
         scandir(l_loc_name, &g_dirents[g_dir_n], NULL, TypeAlphaSort);
 
   } while (l_this_dir_inode[l_inode_num] != g_dirents[g_dir_n][0]->d_ino);
 
   g_cur_dir_name[g_dir_n][0] = '/';
   for (int i = l_inode_num - 1; i >= 0; i--) {
-    g_count[g_dir_n] = scandir(g_cur_dir_name[g_dir_n], &g_dirents[g_dir_n],
-                               NULL, TypeAlphaSort);
-    for (int j = 0; j < g_count[g_dir_n]; j++) {
+    g_dir_count[g_dir_n] = scandir(g_cur_dir_name[g_dir_n], &g_dirents[g_dir_n],
+                                   NULL, TypeAlphaSort);
+    for (int j = 0; j < g_dir_count[g_dir_n]; j++) {
       if (l_this_dir_inode[i] == g_dirents[g_dir_n][j]->d_ino) {
         strcat(g_cur_dir_name[g_dir_n], g_dirents[g_dir_n][j]->d_name);
         strcat(g_cur_dir_name[g_dir_n], "/");
@@ -68,104 +68,150 @@ static void FindAbsDir() { // TODO сделать обработку ВСЕХ о
   }
 
   g_cur_dir_name[g_dir_n][strlen(g_cur_dir_name[g_dir_n]) - 1] = 0;
-  g_count[g_dir_n] = scandir(g_cur_dir_name[g_dir_n], &g_dirents[g_dir_n], NULL,
-                             TypeAlphaSort);
+  g_dir_count[g_dir_n] = scandir(g_cur_dir_name[g_dir_n], &g_dirents[g_dir_n],
+                                 NULL, TypeAlphaSort);
 }
 
 void PrintDir() {
-  g_dir_n = 0;
+  int p_dir_n = g_dir_n;
 
-  FindAbsDir();
-  // g_cur_dir_name[g_dir_n][0] = '/';
-  // g_count[g_dir_n] = scandir(g_cur_dir_name[g_dir_n], &g_dirents[g_dir_n],
-  // NULL,
-  //                            TypeAlphaSort);
-
-  ChDirList(g_dir_n, g_count[g_dir_n], &g_dirents[g_dir_n],
-            g_cur_dir_name[g_dir_n], 1);
-  ChHeaderDirStr(g_dir_n, g_cur_dir_name[g_dir_n]);
-
-  g_dir_n = 1;
+  g_cur_dir_name[p_dir_n] = (char *)calloc(2, sizeof(char));
 
   // FindAbsDir();
-  g_cur_dir_name[g_dir_n][0] = '/';
-  g_count[g_dir_n] = scandir(g_cur_dir_name[g_dir_n], &g_dirents[g_dir_n], NULL,
-                             TypeAlphaSort);
+  strcpy(g_cur_dir_name[p_dir_n], "/");
 
-  ChDirList(g_dir_n, g_count[g_dir_n], &g_dirents[g_dir_n],
-            g_cur_dir_name[g_dir_n], 1);
+  g_dir_count[p_dir_n] = scandir(g_cur_dir_name[p_dir_n], &g_dirents[p_dir_n],
+                                 NULL, TypeAlphaSort);
 
-  ChHeaderDirStr(g_dir_n, g_cur_dir_name[g_dir_n]);
+  ChDirList(p_dir_n, g_dir_count[p_dir_n], &g_dirents[p_dir_n],
+            g_cur_dir_name[p_dir_n], 1);
+  ChHeaderDirStr(p_dir_n, g_cur_dir_name[p_dir_n]);
 
-  g_dir_n = 0;
+  p_dir_n = 1;
+  g_cur_dir_name[p_dir_n] = (char *)calloc(2, sizeof(char));
+
+  // FindAbsDir();
+  strcpy(g_cur_dir_name[p_dir_n], "/");
+
+  g_dir_count[p_dir_n] = scandir(g_cur_dir_name[p_dir_n], &g_dirents[p_dir_n],
+                                 NULL, TypeAlphaSort);
+
+  ChDirList(p_dir_n, g_dir_count[p_dir_n], &g_dirents[p_dir_n],
+            g_cur_dir_name[p_dir_n], 1);
+
+  ChHeaderDirStr(p_dir_n, g_cur_dir_name[p_dir_n]);
+
+  p_dir_n = 0;
+
+  // for (int i = 0; i < 2; i++) {
+  //   g_bef_fold_name[i] = calloc(1, sizeof(char *));
+  //   g_bef_fold_name[i][0] = calloc(258, sizeof(char));
+  // }
 
   // free(dp); // TODO
 }
 
-void EnterDir(char *p_dir, int p_cur_item, int p_act_head) {
+void EnterDir(char *p_dir, int p_cur_item, int p_head_n) {
   unsigned long l_item_ino = 0;
   int l_need_pos = 1, l_need_name_search = 1;
 
   if (strcmp(p_dir, "..") == 0) {
-    l_item_ino = g_dirents[p_act_head][0]->d_ino;
+    l_item_ino = g_dirents[p_head_n][0]->d_ino;
 
     int l_strlen = 0;
-    while (g_cur_dir_name[p_act_head][(
-               l_strlen = strlen(g_cur_dir_name[p_act_head]) - 1)] != '/') {
-      g_cur_dir_name[p_act_head][l_strlen] = 0;
+    while (g_cur_dir_name[p_head_n][(
+               l_strlen = strlen(g_cur_dir_name[p_head_n]) - 1)] != '/') {
+      g_cur_dir_name[p_head_n][l_strlen] = 0;
     }
     if (l_strlen == 0)
-      g_cur_dir_name[p_act_head][0] = '/';
+      strcpy(g_cur_dir_name[p_head_n], "/");
     else
-      g_cur_dir_name[p_act_head][l_strlen] = 0;
+      g_cur_dir_name[p_head_n][l_strlen] = 0;
+
+    g_cur_dir_name[p_head_n] =
+        (char *)realloc(g_cur_dir_name[p_head_n],
+                        (strlen(g_cur_dir_name[p_head_n]) + 1) * sizeof(char));
 
   } else {
-    g_bef_fold_num[p_act_head]++;
-    strcpy(g_bef_fold_name[p_act_head][g_bef_fold_num[p_act_head]],
-           g_dirents[p_act_head][p_cur_item]->d_name);
+    g_bef_fold_num[p_head_n]++;
 
-    if (g_cur_dir_name[p_act_head][strlen(g_cur_dir_name[p_act_head]) - 1] !=
-        '/')
-      strcat(g_cur_dir_name[p_act_head], "/");
+    g_bef_fold_name[p_head_n] =
+        (char **)realloc(g_bef_fold_name[p_head_n],
+                         g_bef_fold_num[p_head_n] * sizeof(char *) * 2);
+    g_bef_fold_name[p_head_n][g_bef_fold_num[p_head_n]] =
+        (char *)calloc(258, sizeof(char));
 
-    strcat(g_cur_dir_name[p_act_head], p_dir);
+    strcpy(g_bef_fold_name[p_head_n][g_bef_fold_num[p_head_n]],
+           g_dirents[p_head_n][p_cur_item]->d_name);
+
+    if (g_cur_dir_name[p_head_n][strlen(g_cur_dir_name[p_head_n]) - 1] != '/') {
+      g_cur_dir_name[p_head_n] = (char *)realloc(
+          g_cur_dir_name[p_head_n],
+          (strlen(g_cur_dir_name[p_head_n]) + 2) * sizeof(char));
+
+      strcat(g_cur_dir_name[p_head_n], "/");
+    }
+    g_cur_dir_name[p_head_n] = (char *)realloc(
+        g_cur_dir_name[p_head_n],
+        (strlen(g_cur_dir_name[p_head_n]) + strlen(p_dir) + 1) * sizeof(char));
+
+    strcat(g_cur_dir_name[p_head_n], p_dir);
   }
 
-  g_count[p_act_head] = scandir(g_cur_dir_name[p_act_head],
-                                &g_dirents[p_act_head], NULL, TypeAlphaSort);
+  g_dir_count[p_head_n] = scandir(g_cur_dir_name[p_head_n],
+                                  &g_dirents[p_head_n], NULL, TypeAlphaSort);
 
-  for (int i = 1; i < g_count[p_act_head]; i++) {
-    if (l_item_ino == g_dirents[p_act_head][i]->d_ino) {
+  for (int i = 1; i < g_dir_count[p_head_n]; i++) {
+    if (l_item_ino == g_dirents[p_head_n][i]->d_ino) {
       l_need_pos = i;
       l_need_name_search = 0;
-      for (int j = 0;
-           j < strlen(g_bef_fold_name[p_act_head][g_bef_fold_num[p_act_head]]);
-           j++) {
-        g_bef_fold_name[p_act_head][g_bef_fold_num[p_act_head]][j] = 0;
+      // for (int j = 0;
+      //      j <
+      //      strlen(g_bef_fold_name[p_act_head][g_bef_fold_num[p_act_head]]);
+      //      j++) {
+      //   g_bef_fold_name[p_act_head][g_bef_fold_num[p_act_head]][j] = 0;
+      // }
+
+      if (g_bef_fold_num[p_head_n] > 0) {
+
+        free(g_bef_fold_name[p_head_n][g_bef_fold_num[p_head_n]]);
+
+        if (g_bef_fold_num[p_head_n] == 1) {
+          free(g_bef_fold_name[p_head_n]);
+          g_bef_fold_name[p_head_n] = NULL;
+        }
+
+        g_bef_fold_num[p_head_n]--;
       }
-      g_bef_fold_num[p_act_head]--;
 
       break;
     }
   }
   if (l_need_name_search == 1) {
-    for (int i = 0; i < g_count[p_act_head]; i++) {
-      if (strcmp(g_bef_fold_name[p_act_head][g_bef_fold_num[p_act_head]],
-                 g_dirents[p_act_head][i]->d_name) == 0) {
-        g_bef_fold_num[p_act_head]--;
-        l_need_pos = i;
-        for (int j = 0;
-             j <
-             strlen(g_bef_fold_name[p_act_head][g_bef_fold_num[p_act_head]]);
-             j++) {
-          g_bef_fold_name[p_act_head][g_bef_fold_num[p_act_head]][j] = 0;
+    for (int i = 0; i < g_dir_count[p_head_n]; i++) {
+      if (strcmp(g_bef_fold_name[p_head_n][g_bef_fold_num[p_head_n]],
+                 g_dirents[p_head_n][i]->d_name) == 0) {
+
+        if (g_bef_fold_num[p_head_n] > 0) {
+
+          free(g_bef_fold_name[p_head_n][g_bef_fold_num[p_head_n]]);
+
+          if (g_bef_fold_num[p_head_n] == 1) {
+            free(g_bef_fold_name[p_head_n]);
+            g_bef_fold_name[p_head_n] = NULL;
+          }
+
+          g_bef_fold_num[p_head_n]--;
         }
+
+        l_need_pos = i;
+
         break;
       }
     }
   }
 
-  ChDirList(p_act_head, g_count[p_act_head], &g_dirents[p_act_head],
-            g_cur_dir_name[p_act_head], l_need_pos);
-  ChHeaderDirStr(p_act_head, g_cur_dir_name[p_act_head]);
+  ChDirList(p_head_n, g_dir_count[p_head_n], &g_dirents[p_head_n],
+            g_cur_dir_name[p_head_n], l_need_pos);
+  ChHeaderDirStr(p_head_n, g_cur_dir_name[p_head_n]);
 }
