@@ -175,7 +175,7 @@ static void ColorMenuItems(int k, int p_max_vis_item, int p_cur_vis_menu_id,
   // werase(g_headers_wnd[1 + k]);
 
   // redrawwin(g_headers_wnd[1 + k]);
-  // wrefresh(g_headers_wnd[1 + k]);
+  wrefresh(g_headers_wnd[1 + k]);
 
   // doupdate();
 }
