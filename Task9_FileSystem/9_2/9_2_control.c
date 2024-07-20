@@ -2,7 +2,7 @@
 #include "./9_2_graphic.h"
 #include <curses.h>
 // #include <stdio.h>
-#include <stdlib.h>
+// #include <stdlib.h>
 // #include <stdlib.h>
 
 void CommanderControl() {
@@ -10,9 +10,9 @@ void CommanderControl() {
   PrintDir();
   // getchar();
   // SigWinCh(0);
-  // MenuManager();
+  MenuManager();
 
-  getchar();
-  endwin();
-  exit(EXIT_SUCCESS);
+  // getchar();
+  // endwin();
+  // exit(EXIT_SUCCESS);
 }

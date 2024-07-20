@@ -55,6 +55,9 @@ void ChHeaderDirStr(int p_num, char *p_str_in, int p_need_change) {
   }
 
   // werase(l_loc_header);
+  // if (p_need_change == 1)
+  wrefresh(g_windows_wnd[p_num]);
+
   wattron(l_loc_header, COLOR_PAIR(1));
 
   mvwprintw(l_loc_header, 0, 2, " %s ", g_str_out[p_num]);
@@ -172,6 +175,7 @@ static void ColorMenuItems(int k, int p_max_vis_item, int p_cur_vis_menu_id,
   }
 
   wrefresh(g_windows_wnd[k]);
+
   // werase(g_headers_wnd[1 + k]);
 
   // redrawwin(g_headers_wnd[1 + k]);
