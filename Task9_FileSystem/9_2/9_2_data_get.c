@@ -85,7 +85,7 @@ void PrintDir() {
 
   ChDirList(p_dir_n, g_dir_count[p_dir_n], &g_dirents[p_dir_n],
             g_cur_dir_name[p_dir_n], 1);
-  ChHeaderDirStr(p_dir_n, g_cur_dir_name[p_dir_n]);
+  ChHeaderDirStr(p_dir_n, g_cur_dir_name[p_dir_n], 1);
 
   p_dir_n = 1;
   g_cur_dir_name[p_dir_n] = (char *)calloc(2, sizeof(char));
@@ -99,7 +99,7 @@ void PrintDir() {
   ChDirList(p_dir_n, g_dir_count[p_dir_n], &g_dirents[p_dir_n],
             g_cur_dir_name[p_dir_n], 1);
 
-  ChHeaderDirStr(p_dir_n, g_cur_dir_name[p_dir_n]);
+  ChHeaderDirStr(p_dir_n, g_cur_dir_name[p_dir_n], 1);
 
   p_dir_n = 0;
 
@@ -213,5 +213,5 @@ void EnterDir(char *p_dir, int p_cur_item, int p_head_n) {
 
   ChDirList(p_head_n, g_dir_count[p_head_n], &g_dirents[p_head_n],
             g_cur_dir_name[p_head_n], l_need_pos);
-  ChHeaderDirStr(p_head_n, g_cur_dir_name[p_head_n]);
+  ChHeaderDirStr(p_head_n, g_cur_dir_name[p_head_n], 1);
 }

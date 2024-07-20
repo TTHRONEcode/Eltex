@@ -7,7 +7,7 @@ int MenuManager();
 #include <dirent.h>
 #include <menu.h>
 void ChDirList(int, int, struct dirent ***, char *, int);
-void ChHeaderDirStr(int, char *);
+void ChHeaderDirStr(int, char *, int);
 void SigWinCh(int);
 
 #endif
