@@ -7,7 +7,7 @@
 
 void CommanderControl() {
   GraphicShow();
-  PrintDir();
+  InitDirsData();
   // getchar();
   // SigWinCh(0);
   MenuManager();

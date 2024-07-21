@@ -1,4 +1,5 @@
 #include "9_2_data_get.h"
+
 #include <curses.h>
 #include <dirent.h>
 #include <malloc.h>
@@ -184,41 +185,49 @@ static void ColorMenuItems(int k, int p_max_vis_item, int p_cur_vis_menu_id,
   // doupdate();
 }
 
-static void RedrawMenu(int k) {
-  g_dp_count[k] = g_list_el_count[k], g_input[k] = 0;
+static void RedrawMenu(int n) {
+  // if (g_item[n] != NULL) {
+  // for (int i = 0; i < g_dp_count[n] - 1; i++) {
+  //   free_item(g_item[n][i]);
+  // }
+  // free(g_item[n]);
+  // }
 
-  g_cur_menu_id[k] = g_cursor_pos[k] - 1, g_max_vis_item[k] = 0,
-  g_min_vis_item[k] = 0;
+  g_dp_count[n] = g_list_el_count[n], g_input[n] = 0;
 
-  getmaxyx(g_windows_wnd[k], g_row[k], g_col[k]);
+  g_cur_menu_id[n] = g_cursor_pos[n] - 1, g_max_vis_item[n] = 0,
+  g_min_vis_item[n] = 0;
 
-  g_item[k] = (ITEM **)calloc(g_dp_count[k], sizeof(ITEM *));
-  l_item_str_w_type[k] = (char **)calloc(g_dp_count[k], sizeof(char *));
+  getmaxyx(g_windows_wnd[n], g_row[n], g_col[n]);
 
-  for (int i = 1; i < g_dp_count[k]; i++) {
-    l_item_str_w_type[k][i] =
-        (char *)calloc(strlen(g_dir_lists[k][i]->d_name) + 2, sizeof(char));
+  // free(l_item_str_w_type[n]);
+  g_item[n] = (ITEM **)calloc(g_dp_count[n], sizeof(ITEM *));
+  l_item_str_w_type[n] = (char **)calloc(g_dp_count[n], sizeof(char *));
 
-    l_item_str_w_type[k][i][0] =
-        g_dir_lists[k][i]->d_type == DT_DIR ? '/' : ' ';
-    strcat(l_item_str_w_type[k][i], g_dir_lists[k][i]->d_name);
-    g_item[k][i - 1] = new_item(l_item_str_w_type[k][i], "");
+  for (int i = 1; i < g_dp_count[n]; i++) {
+    l_item_str_w_type[n][i] =
+        (char *)calloc(strlen(g_dir_lists[n][i]->d_name) + 2, sizeof(char));
+
+    l_item_str_w_type[n][i][0] =
+        g_dir_lists[n][i]->d_type == DT_DIR ? '/' : ' ';
+    strcat(l_item_str_w_type[n][i], g_dir_lists[n][i]->d_name);
+    g_item[n][i - 1] = new_item(l_item_str_w_type[n][i], "");
   }
 
-  g_my_menu[k] = new_menu((ITEM **)g_item[k]);
-  set_menu_format(g_my_menu[k], g_row[k] - 2, 1);
+  g_my_menu[n] = new_menu((ITEM **)g_item[n]);
+  set_menu_format(g_my_menu[n], g_row[n] - 2, 1);
   // set_menu_win(g_my_menu[k], g_windows_wnd[k]);
 
-  wresize(g_menu_wnd[k], g_row[k] - 2, g_col[k] - 2);
-  set_menu_sub(g_my_menu[k], g_menu_wnd[k]);
-  set_menu_mark(g_my_menu[k], "");
+  wresize(g_menu_wnd[n], g_row[n] - 2, g_col[n] - 2);
+  set_menu_sub(g_my_menu[n], g_menu_wnd[n]);
+  set_menu_mark(g_my_menu[n], "");
 
   // wrefresh(g_menu_wnd[k]);
-  post_menu(g_my_menu[k]);
+  post_menu(g_my_menu[n]);
 
-  set_current_item(g_my_menu[k], g_item[k][g_cur_menu_id[k]]);
+  set_current_item(g_my_menu[n], g_item[n][g_cur_menu_id[n]]);
 
-  ChVisMenuId(k);
+  ChVisMenuId(n);
 }
 void RedrawBox(int p_num) {
   WINDOW *l_window = g_windows_wnd[p_num];
@@ -289,6 +298,12 @@ void SigWinCh(int p_signo) {
 
   //////////////
 
+  for (int j = 0; j < 2; j++) {
+    for (int i = 0; i < g_dp_count[j]; i++) {
+      free(l_item_str_w_type[j][i]);
+    }
+    free(l_item_str_w_type[j]);
+  }
   for (int i = 0; i < 2; i++) {
     RedrawBox(i);
     RedrawMenu(i);
@@ -301,6 +316,21 @@ void SigWinCh(int p_signo) {
     redrawwin(g_windows_wnd[i]);
     wrefresh(g_windows_wnd[i]);
     ChHeaderDirStr(i, g_str_out[i], 0);
+  }
+
+  for (int j = 0; j < 2; j++) {
+    for (int i = 0; i < g_dp_count[j]; i++) {
+      free(l_item_str_w_type[j][i]);
+    }
+    free(l_item_str_w_type[j]);
+
+    free_menu(g_my_menu[j]);
+    if (g_dp_count[j] > 0) {
+      for (int i = 1; i < g_dp_count[j]; i++) {
+        free_item(g_item[j][i - 1]);
+      }
+    }
+    free(g_item[j]);
   }
 
   // refresh();
@@ -333,8 +363,9 @@ int MenuManager() {
 
   while (1) {
 
-    if (g_need_reset[g_head_n] != 2)
+    if (g_need_reset[g_head_n] != 2) {
       RedrawMenu(g_head_n);
+    }
 
     g_need_reset[g_head_n] = 0;
 
@@ -384,46 +415,76 @@ int MenuManager() {
         break;
 
       case 'e':
+        for (int i = 0; i < g_dp_count[g_head_n]; i++) {
+          free(l_item_str_w_type[g_head_n][i]);
+        }
+        free(l_item_str_w_type[g_head_n]);
+
         if (g_dir_lists[g_head_n][g_cur_menu_id[g_head_n] + 1]->d_type ==
             DT_DIR) {
           EnterDir(g_dir_lists[g_head_n][g_cur_menu_id[g_head_n] + 1]->d_name,
                    g_cur_menu_id[g_head_n] + 1, g_head_n);
           g_need_reset[g_head_n] = 1;
 
-          for (int i = 0; i < g_dp_count[g_head_n]; i++) {
-            free(l_item_str_w_type[g_head_n][i]);
+          free_menu(g_my_menu[g_head_n]);
+          if (g_dp_count[g_head_n] > 0) {
+            for (int i = 1; i < g_dp_count[g_head_n]; i++) {
+              free_item(g_item[g_head_n][i - 1]);
+            }
           }
-          free(l_item_str_w_type[g_head_n]);
-          for (int i = 0; i < g_dp_count[g_head_n] - 1; i++) {
+          free(g_item[g_head_n]);
+          // for (int i = 0; i < g_dp_count[g_head_n] - 1; i++) {
 
-            free_item(g_item[g_head_n][i]);
-          }
+          //   free_item(g_item[g_head_n][i]);
+          // }
+          // free(g_item[g_head_n]);
 
           // free_item(*g_item[g_head_n]);
         }
         break;
       case '\n':
+        for (int i = 0; i < g_dp_count[g_head_n]; i++) {
+          free(l_item_str_w_type[g_head_n][i]);
+        }
+        free(l_item_str_w_type[g_head_n]);
+
         if (g_dir_lists[g_head_n][g_cur_menu_id[g_head_n] + 1]->d_type ==
             DT_DIR) {
           EnterDir(g_dir_lists[g_head_n][g_cur_menu_id[g_head_n] + 1]->d_name,
                    g_cur_menu_id[g_head_n] + 1, g_head_n);
           g_need_reset[g_head_n] = 1;
 
-          for (int i = 0; i < g_dp_count[g_head_n]; i++) {
-            free(l_item_str_w_type[g_head_n][i]);
+          free_menu(g_my_menu[g_head_n]);
+          if (g_dp_count[g_head_n] > 0) {
+            for (int i = 1; i < g_dp_count[g_head_n]; i++) {
+              free_item(g_item[g_head_n][i - 1]);
+            }
           }
-          free(l_item_str_w_type[g_head_n]);
-          for (int i = 0; i < g_dp_count[g_head_n] - 1; i++) {
+          free(g_item[g_head_n]);
+          // for (int i = 0; i < g_dp_count[g_head_n] - 1; i++) {
 
-            free_item(g_item[g_head_n][i]);
-          }
+          //   free_item(g_item[g_head_n][i]);
+          // }
+          // free(g_item[g_head_n]);
           // free_item(*g_item[g_head_n]);
         }
         break;
 
       case 'q':
+        for (int i = 0; i < g_dp_count[g_head_n]; i++) {
+          free(l_item_str_w_type[g_head_n][i]);
+        }
+        free(l_item_str_w_type[g_head_n]);
         EnterDir(g_dir_lists[g_head_n][1]->d_name, 1, g_head_n);
         g_need_reset[g_head_n] = 1;
+
+        free_menu(g_my_menu[g_head_n]);
+        if (g_dp_count[g_head_n] > 0) {
+          for (int i = 1; i < g_dp_count[g_head_n]; i++) {
+            free_item(g_item[g_head_n][i - 1]);
+          }
+        }
+        free(g_item[g_head_n]);
         break;
 
         // case KEY_RESIZE:
@@ -452,19 +513,21 @@ int MenuManager() {
 
       case KEY_F(10):
         // getchar();
-        for (int j = 0; j < 2; j++) {
-          for (int i = 0; i < g_dp_count[j]; i++) {
-            free(l_item_str_w_type[j][i]);
-          }
-          free(l_item_str_w_type[j]);
-          for (int i = 0; i < g_dp_count[j] - 1; i++) {
-
-            free_item(g_item[j][i]);
-          }
-        }
+        keypad(stdscr, FALSE);
 
         free_menu(g_my_menu[0]);
         free_menu(g_my_menu[1]);
+        for (int j = 0; j < 2; j++) {
+          for (int i = 0; i < g_list_el_count[j]; i++) {
+            free(l_item_str_w_type[j][i]);
+          }
+          free(l_item_str_w_type[j]);
+          for (int i = 0; i < g_list_el_count[j] - 1; i++) {
+
+            free_item(g_item[j][i]);
+          }
+          free(g_item[j]);
+        }
 
         for (int i = 0; i < 2; i++) {
           delwin(g_windows_wnd[i]);
@@ -472,6 +535,8 @@ int MenuManager() {
         for (int i = 0; i < 3; i++) {
           delwin(g_headers_wnd[i]);
         }
+
+        FreeAllData();
 
         endwin();
         exit(EXIT_SUCCESS);

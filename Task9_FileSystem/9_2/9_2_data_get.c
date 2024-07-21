@@ -1,3 +1,5 @@
+#include <malloc.h>
+
 #include <dirent.h>
 #include <menu.h>
 #include <stdio.h>
@@ -72,43 +74,23 @@ static void FindAbsDir() { // TODO сделать обработку ВСЕХ о
                                  NULL, TypeAlphaSort);
 }
 
-void PrintDir() {
-  int p_dir_n = g_dir_n;
+void InitDirsData() {
+  for (int i = 0; i < 2; i++) {
+    g_cur_dir_name[i] = (char *)calloc(2, sizeof(char));
 
-  g_cur_dir_name[p_dir_n] = (char *)calloc(2, sizeof(char));
+    // FindAbsDir();
+    strcpy(g_cur_dir_name[i], "/");
 
-  // FindAbsDir();
-  strcpy(g_cur_dir_name[p_dir_n], "/");
+    for (int j = 0; j < g_dir_count[i]; j++) {
+      free(g_dirents[i][j]);
+    }
+    free(g_dirents[i]);
+    g_dir_count[i] =
+        scandir(g_cur_dir_name[i], &g_dirents[i], NULL, TypeAlphaSort);
 
-  g_dir_count[p_dir_n] = scandir(g_cur_dir_name[p_dir_n], &g_dirents[p_dir_n],
-                                 NULL, TypeAlphaSort);
-
-  ChDirList(p_dir_n, g_dir_count[p_dir_n], &g_dirents[p_dir_n],
-            g_cur_dir_name[p_dir_n], 1);
-  ChHeaderDirStr(p_dir_n, g_cur_dir_name[p_dir_n], 1);
-
-  p_dir_n = 1;
-  g_cur_dir_name[p_dir_n] = (char *)calloc(2, sizeof(char));
-
-  // FindAbsDir();
-  strcpy(g_cur_dir_name[p_dir_n], "/");
-
-  g_dir_count[p_dir_n] = scandir(g_cur_dir_name[p_dir_n], &g_dirents[p_dir_n],
-                                 NULL, TypeAlphaSort);
-
-  ChDirList(p_dir_n, g_dir_count[p_dir_n], &g_dirents[p_dir_n],
-            g_cur_dir_name[p_dir_n], 1);
-
-  ChHeaderDirStr(p_dir_n, g_cur_dir_name[p_dir_n], 1);
-
-  p_dir_n = 0;
-
-  // for (int i = 0; i < 2; i++) {
-  //   g_bef_fold_name[i] = calloc(1, sizeof(char *));
-  //   g_bef_fold_name[i][0] = calloc(258, sizeof(char));
-  // }
-
-  // free(dp); // TODO
+    ChDirList(i, g_dir_count[i], &g_dirents[i], g_cur_dir_name[i], 1);
+    ChHeaderDirStr(i, g_cur_dir_name[i], 1);
+  }
 }
 
 void EnterDir(char *p_dir, int p_cur_item, int p_head_n) {
@@ -133,11 +115,14 @@ void EnterDir(char *p_dir, int p_cur_item, int p_head_n) {
                         (strlen(g_cur_dir_name[p_head_n]) + 1) * sizeof(char));
 
   } else {
+    // if (g_bef_fold_num[p_head_n] > 0)
+    //   free(g_bef_fold_name[p_head_n][g_bef_fold_num[p_head_n]]);
     g_bef_fold_num[p_head_n]++;
 
     g_bef_fold_name[p_head_n] =
         (char **)realloc(g_bef_fold_name[p_head_n],
                          g_bef_fold_num[p_head_n] * sizeof(char *) * 2);
+
     g_bef_fold_name[p_head_n][g_bef_fold_num[p_head_n]] =
         (char *)calloc(258, sizeof(char));
 
@@ -158,6 +143,10 @@ void EnterDir(char *p_dir, int p_cur_item, int p_head_n) {
     strcat(g_cur_dir_name[p_head_n], p_dir);
   }
 
+  for (int j = 0; j < g_dir_count[p_head_n]; j++) {
+    free(g_dirents[p_head_n][j]);
+  }
+  free(g_dirents[p_head_n]);
   g_dir_count[p_head_n] = scandir(g_cur_dir_name[p_head_n],
                                   &g_dirents[p_head_n], NULL, TypeAlphaSort);
 
@@ -214,4 +203,22 @@ void EnterDir(char *p_dir, int p_cur_item, int p_head_n) {
   ChDirList(p_head_n, g_dir_count[p_head_n], &g_dirents[p_head_n],
             g_cur_dir_name[p_head_n], l_need_pos);
   ChHeaderDirStr(p_head_n, g_cur_dir_name[p_head_n], 1);
+}
+
+void FreeAllData() {
+
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < g_dir_count[i]; j++) {
+      free(g_dirents[i][j]);
+    }
+    free(g_dirents[i]);
+    free(g_cur_dir_name[i]);
+
+    if (g_bef_fold_num[i] > 0) {
+      for (int j = 0; j < g_bef_fold_num[i]; j++) {
+        free(g_bef_fold_name[i][j + 1]);
+      }
+      free(g_bef_fold_name[i]);
+    }
+  }
 }
