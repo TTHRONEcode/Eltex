@@ -1,10 +1,10 @@
-#include <malloc.h>
-
 #include <dirent.h>
+#include <err.h>
 #include <menu.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "./9_2_graphic.h"
 
@@ -12,8 +12,6 @@ char *g_cur_dir_name[2];
 struct dirent **g_dirents[2];
 int g_dir_count[2], g_bef_fold_num[2];
 char **g_bef_fold_name[2];
-
-static int g_dir_n;
 
 static int TypeAlphaSort(const struct dirent **p_e_1,
                          const struct dirent **p_e_2) {
@@ -35,60 +33,56 @@ static int TypeAlphaSort(const struct dirent **p_e_1,
   return l_c;
 }
 
-static void FindAbsDir() { // TODO сделать обработку ВСЕХ ошибок
-  ino_t l_this_dir_inode[20] = {0};
-  char l_loc_name[10000] = {0};
-  int l_inode_num = -1;
-
-  strcat(l_loc_name, ".");
-  g_dir_count[g_dir_n] =
-      scandir(l_loc_name, &g_dirents[g_dir_n], NULL, TypeAlphaSort);
-
-  do {
-    l_inode_num++;
-    l_this_dir_inode[l_inode_num] = g_dirents[g_dir_n][0]->d_ino;
-
-    strcat(l_loc_name, "/..");
-
-    g_dir_count[g_dir_n] =
-        scandir(l_loc_name, &g_dirents[g_dir_n], NULL, TypeAlphaSort);
-
-  } while (l_this_dir_inode[l_inode_num] != g_dirents[g_dir_n][0]->d_ino);
-
-  g_cur_dir_name[g_dir_n][0] = '/';
-  for (int i = l_inode_num - 1; i >= 0; i--) {
-    g_dir_count[g_dir_n] = scandir(g_cur_dir_name[g_dir_n], &g_dirents[g_dir_n],
-                                   NULL, TypeAlphaSort);
-    for (int j = 0; j < g_dir_count[g_dir_n]; j++) {
-      if (l_this_dir_inode[i] == g_dirents[g_dir_n][j]->d_ino) {
-        strcat(g_cur_dir_name[g_dir_n], g_dirents[g_dir_n][j]->d_name);
-        strcat(g_cur_dir_name[g_dir_n], "/");
-
-        break;
-      }
-    }
+static void *SafeCalloc(int p_nmemb, size_t p_size, int p_call_line) {
+  char *p = calloc(p_nmemb, p_size);
+  if (p == NULL) {
+    endwin();
+    err(EXIT_FAILURE, "calloc on line: %d", p_call_line);
   }
 
-  g_cur_dir_name[g_dir_n][strlen(g_cur_dir_name[g_dir_n]) - 1] = 0;
-  g_dir_count[g_dir_n] = scandir(g_cur_dir_name[g_dir_n], &g_dirents[g_dir_n],
-                                 NULL, TypeAlphaSort);
+  return p;
 }
 
-void InitDirsData() {
+static int SafeScandir(const char *__restrict __dir,
+                       struct dirent ***__restrict __namelist,
+                       int (*__selector)(const struct dirent *),
+                       int (*__cmp)(const struct dirent **,
+                                    const struct dirent **),
+                       int __call_line) {
+  int l = scandir(__dir, __namelist, __selector, __cmp);
+  if (l == -1) {
+    endwin();
+    err(EXIT_FAILURE, "scandir at line: %d folder: %s", __call_line, __dir);
+  }
+
+  return l;
+}
+
+void PrintDir() {
+
   for (int i = 0; i < 2; i++) {
-    g_cur_dir_name[i] = (char *)calloc(2, sizeof(char));
+    g_cur_dir_name[i] = SafeCalloc(2, sizeof(char), __LINE__);
 
     // FindAbsDir();
     strcpy(g_cur_dir_name[i], "/");
 
-    for (int j = 0; j < g_dir_count[i]; j++) {
-      free(g_dirents[i][j]);
-    }
-    free(g_dirents[i]);
-    g_dir_count[i] =
-        scandir(g_cur_dir_name[i], &g_dirents[i], NULL, TypeAlphaSort);
+    g_dir_count[i] = SafeScandir(g_cur_dir_name[i], &g_dirents[i], NULL,
+                                 TypeAlphaSort, __LINE__);
 
     ChDirList(i, g_dir_count[i], &g_dirents[i], g_cur_dir_name[i], 1);
+    ChHeaderDirStr(i, g_cur_dir_name[i], 1);
+
+    i = 1;
+    g_cur_dir_name[i] = SafeCalloc(2, sizeof(char), __LINE__);
+
+    // FindAbsDir();
+    strcpy(g_cur_dir_name[i], "/");
+
+    g_dir_count[i] = SafeScandir(g_cur_dir_name[i], &g_dirents[i], NULL,
+                                 TypeAlphaSort, __LINE__);
+
+    ChDirList(i, g_dir_count[i], &g_dirents[i], g_cur_dir_name[i], 1);
+
     ChHeaderDirStr(i, g_cur_dir_name[i], 1);
   }
 }
@@ -115,16 +109,13 @@ void EnterDir(char *p_dir, int p_cur_item, int p_head_n) {
                         (strlen(g_cur_dir_name[p_head_n]) + 1) * sizeof(char));
 
   } else {
-    // if (g_bef_fold_num[p_head_n] > 0)
-    //   free(g_bef_fold_name[p_head_n][g_bef_fold_num[p_head_n]]);
     g_bef_fold_num[p_head_n]++;
 
     g_bef_fold_name[p_head_n] =
         (char **)realloc(g_bef_fold_name[p_head_n],
                          g_bef_fold_num[p_head_n] * sizeof(char *) * 2);
-
     g_bef_fold_name[p_head_n][g_bef_fold_num[p_head_n]] =
-        (char *)calloc(258, sizeof(char));
+        SafeCalloc(258, sizeof(char), __LINE__);
 
     strcpy(g_bef_fold_name[p_head_n][g_bef_fold_num[p_head_n]],
            g_dirents[p_head_n][p_cur_item]->d_name);
@@ -143,23 +134,14 @@ void EnterDir(char *p_dir, int p_cur_item, int p_head_n) {
     strcat(g_cur_dir_name[p_head_n], p_dir);
   }
 
-  for (int j = 0; j < g_dir_count[p_head_n]; j++) {
-    free(g_dirents[p_head_n][j]);
-  }
-  free(g_dirents[p_head_n]);
-  g_dir_count[p_head_n] = scandir(g_cur_dir_name[p_head_n],
-                                  &g_dirents[p_head_n], NULL, TypeAlphaSort);
+  g_dir_count[p_head_n] =
+      SafeScandir(g_cur_dir_name[p_head_n], &g_dirents[p_head_n], NULL,
+                  TypeAlphaSort, __LINE__);
 
   for (int i = 1; i < g_dir_count[p_head_n]; i++) {
     if (l_item_ino == g_dirents[p_head_n][i]->d_ino) {
       l_need_pos = i;
       l_need_name_search = 0;
-      // for (int j = 0;
-      //      j <
-      //      strlen(g_bef_fold_name[p_act_head][g_bef_fold_num[p_act_head]]);
-      //      j++) {
-      //   g_bef_fold_name[p_act_head][g_bef_fold_num[p_act_head]][j] = 0;
-      // }
 
       if (g_bef_fold_num[p_head_n] > 0) {
 
@@ -203,22 +185,4 @@ void EnterDir(char *p_dir, int p_cur_item, int p_head_n) {
   ChDirList(p_head_n, g_dir_count[p_head_n], &g_dirents[p_head_n],
             g_cur_dir_name[p_head_n], l_need_pos);
   ChHeaderDirStr(p_head_n, g_cur_dir_name[p_head_n], 1);
-}
-
-void FreeAllData() {
-
-  for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < g_dir_count[i]; j++) {
-      free(g_dirents[i][j]);
-    }
-    free(g_dirents[i]);
-    free(g_cur_dir_name[i]);
-
-    if (g_bef_fold_num[i] > 0) {
-      for (int j = 0; j < g_bef_fold_num[i]; j++) {
-        free(g_bef_fold_name[i][j + 1]);
-      }
-      free(g_bef_fold_name[i]);
-    }
-  }
 }
