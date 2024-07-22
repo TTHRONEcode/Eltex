@@ -13,10 +13,10 @@ struct CalcFuncsBook {
 };
 
 struct CalcFuncsBook CalcFuncs[5] = {
-    {ADD, "Сложение", "a + b", CalcProcAdd}, /////
-    {SUB, "Вычитание", "a - b", CalcProcSub},
-    {MUL, "Умножение", "a * b", CalcProcMul},
-    {DIV, "Деление", "a / b", CalcProcDiv},
+    {ADD, "Сложение", "a + b", Calc_Proc_Add}, /////
+    {SUB, "Вычитание", "a - b", Calc_Proc_Sub},
+    {MUL, "Умножение", "a * b", Calc_Proc_Mul},
+    {DIV, "Деление", "a / b", Calc_Proc_Div},
     {EXIT, "Выход", "Выходим...", NULL}};
 int g_max_num = sizeof(CalcFuncs) / sizeof(CalcFuncs[0]);
 
