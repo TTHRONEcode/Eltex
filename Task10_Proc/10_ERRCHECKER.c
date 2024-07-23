@@ -13,7 +13,7 @@ pid_t ERRCHECK_fork(const char *FILE_NAME, const char *func, int LINE) {
 }
 
 int ERRCHECK_wait(const char *FILE_NAME, const char *func, int LINE) {
-  int w;
+  int w = 0;
   wait(&w);
   if (w == -1)
     err(EXIT_FAILURE, "wait, %s, %s, %d\n", FILE_NAME, func, LINE);

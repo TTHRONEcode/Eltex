@@ -1,13 +1,14 @@
 CC = gcc
-debug = -Wall -Werror
-target = 10_3_proc
+debug = -g -Wall -Werror
+target = totalblack
+libs = -lmenu -lncurses
 
 COMPMAKE = make
 REMOVE = rm *.o ./*
 
 $(target): *.o
 	cd .. && $(COMPMAKE) 
-	$(CC) ./../*.o *.o -o $(target)
+	$(CC) ./../*.o *.o -o $(target) $(libs)
 	@echo Done!
 
 *.o: *.c
@@ -15,7 +16,8 @@ $(target): *.o
 
 clear:
 	rm -f *.o $(target)
-
+	
 clear_all:
 	rm -f *.o $(target)
 	cd .. && rm -f *.o
+	 

@@ -14,7 +14,7 @@ $(target): *.o
 	$(CC) $(debug) -c *.c
 
 clear:
-	rm *.o $(target)
+	rm -f *.o $(target)
 
 clear_all:
 	rm -f *.o $(target)

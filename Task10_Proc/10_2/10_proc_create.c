@@ -7,7 +7,7 @@
 pid_t fork_pids[5];
 int child_exit_status;
 
-void ProcCreate() {
+void ProcExecute() {
   if ((fork_pids[0] = D_ERRCHECK_fork) == 0) { // PROC 1
     PrintfProcPPID("PROC 1");
     if ((fork_pids[2] = D_ERRCHECK_fork) == 0) { // PROC 3

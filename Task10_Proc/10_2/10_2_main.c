@@ -1,7 +1,7 @@
 #include "./10_2_proc_create.h"
 
 int main() {
-  ProcCreate();
+  ProcExecute();
 
   return 0;
 }
