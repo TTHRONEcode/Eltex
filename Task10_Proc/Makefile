@@ -1,5 +1,5 @@
 CC = gcc
-debug = 
+debug = -Wall -Werror
 
 *.o: *.c
 	$(CC) $(debug) -c *.c

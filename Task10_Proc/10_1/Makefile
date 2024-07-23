@@ -1,5 +1,5 @@
 CC = gcc
-debug = 
+debug = -Wall -Werror
 target = 10_1_proc
 
 COMPMAKE = make

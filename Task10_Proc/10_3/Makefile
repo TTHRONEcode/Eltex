@@ -1,6 +1,6 @@
 CC = gcc
 debug = -Wall -Werror
-target = 10_2_proc
+target = 10_3_proc
 
 COMPMAKE = make
 REMOVE = rm *.o ./*
