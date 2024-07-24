@@ -244,7 +244,11 @@ static void RedrawMenu(int k) {
                                          sizeof(char), __LINE__);
 
     l_item_str_w_type[k][i][0] =
-        g_dir_lists[k][i]->d_type == DT_DIR ? '/' : ' ';
+        g_dir_lists[k][i]->d_type == DT_DIR
+            ? '/'
+            : (IsExecutable(GetFullDirPathName(g_dir_lists[k][i]->d_name)) == 1
+                   ? '*'
+                   : ' ');
     strcat(l_item_str_w_type[k][i], g_dir_lists[k][i]->d_name);
     g_item[k][i - 1] = new_item(l_item_str_w_type[k][i], "");
   }
@@ -357,19 +361,34 @@ int MenuManager() {
                    g_min_vis_item[j], g_col[j], A_NORMAL);
   }
 
+  g_need_reset[0] = 4;
+
   while (1) {
 
     if (g_need_reset[g_head_n] != 2)
       RedrawMenu(g_head_n);
+    else {
+      redrawwin(g_windows_wnd[g_head_n]);
+      wrefresh(g_windows_wnd[g_head_n]);
 
-    g_need_reset[g_head_n] = 0;
+      ChHeaderDirStr(g_head_n, NULL, 0);
+      wrefresh(g_headers_wnd[1 + g_head_n]);
+    }
 
-    while (g_need_reset[g_head_n] == 0) {
+    if (g_need_reset[g_head_n] <= 2)
+      g_need_reset[g_head_n] = 0;
+
+    while (g_need_reset[g_head_n] == 0 || g_need_reset[g_head_n] >= 3) {
       ColorMenuItems(g_head_n, g_max_vis_item[g_head_n],
                      g_cur_vis_menu_id[g_head_n], g_min_vis_item[g_head_n],
                      g_col[g_head_n], A_NORMAL);
 
-      g_input[g_head_n] = getch();
+      if (g_need_reset[g_head_n] <= 2)
+        g_input[g_head_n] = getch();
+      else {
+        g_need_reset[g_head_n]--;
+        g_input[g_head_n] = '\t';
+      }
 
       switch (g_input[g_head_n]) {
 
@@ -408,6 +427,7 @@ int MenuManager() {
         break;
 
       case '\t':
+
         ColorMenuItems(g_head_n, g_max_vis_item[g_head_n],
                        g_cur_vis_menu_id[g_head_n], g_min_vis_item[g_head_n],
                        g_col[g_head_n], A_DIM);

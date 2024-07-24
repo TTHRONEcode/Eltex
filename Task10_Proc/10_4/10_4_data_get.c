@@ -61,10 +61,7 @@ static int SafeScandir(const char *__restrict __dir,
 void PrintDir() {
 
   for (int i = 0; i < 2; i++) {
-    g_cur_dir_name[i] = SafeCalloc(2, sizeof(char), __LINE__);
-
-    // FindAbsDir();
-    strcpy(g_cur_dir_name[i], "/");
+    g_cur_dir_name[i] = realpath(i == 0 ? "." : "/", NULL);
 
     g_dir_count[i] = SafeScandir(g_cur_dir_name[i], &g_dirents[i], NULL,
                                  TypeAlphaSort, __LINE__);
@@ -124,6 +121,9 @@ void EnterDir(char *p_dir, int p_cur_item, int p_head_n) {
   g_dir_count[p_head_n] =
       SafeScandir(g_cur_dir_name[p_head_n], &g_dirents[p_head_n], NULL,
                   TypeAlphaSort, __LINE__);
+  // for (int i = 0; i < g_dir_count[p_head_n]; i++) {
+  //   realpath(g_dirents[p_head_n][i]->d_name, g_dirents[p_head_n][i]->d_name);
+  // }
 
   for (int i = 1; i < g_dir_count[p_head_n]; i++) {
     if (l_item_ino == g_dirents[p_head_n][i]->d_ino) {
