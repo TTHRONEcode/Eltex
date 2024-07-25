@@ -1,6 +1,6 @@
 CC = gcc
-debug = -Wall -Werror
-target = five_threads
+debug = -g -Wall -Werror
+target = shoping
 
 $(target): *.o
 	$(CC) *.o -o $(target)

@@ -2,10 +2,7 @@ CC = gcc
 debug = -Wall -Werror
 target = useless_mutex
 
-COMPMAKE = make
-REMOVE = rm *.o ./*
-
-$(target): *.o
+$(target): %.o
 	$(CC) *.o -o $(target)
 	@echo Done!
 
