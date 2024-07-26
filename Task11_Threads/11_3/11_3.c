@@ -69,7 +69,7 @@ void InitLoader(void) {
 
 void *Buyers(void *args) {
 
-  pthread_once(&once_loader, InitLoader); //
+  pthread_once(&once_loader, InitLoader);
 
   int thrd_n = *((int *)args);
   int needs = 100000 + (rand() % 10000 - 5000);
