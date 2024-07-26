@@ -6,150 +6,207 @@
 
 #include "./../../Task10_Proc/10_ERRCHECKER.h"
 
-int
-main ()
+int str_num, g_i, slash_numb, pipe_count;
+char enter_str[257], pathname[2][257], command[2][257], args[2][257],
+    *usr_bin_path = "/usr/bin/";
+
+int pipe_pos;
+int pipe_des[2];
+
+void
+CommandConstruct (int comm_n, int from_n, int to_n)
 {
-  int str_num = 0, i = 0, slash_numb = 0;
-  char enter_str[257] = { 0 }, pathname[257] = { 0 }, command[257] = { 0 },
-       args[257] = { 0 }, *usr_bin_path = "/usr/bin/";
+  str_num = 0;
 
-  bool need_pipe = false;
+  if (enter_str[from_n] != '/' && enter_str[from_n] != '.')
+    {
+      strncpy (pathname[comm_n], usr_bin_path, strlen (usr_bin_path));
+      for (g_i = from_n; g_i < to_n; g_i++)
+        {
+          if (enter_str[g_i] == ' ')
+            {
+              str_num++;
 
-  int pipe_des[2];
+              if (str_num != 2)
+                continue;
+              else
+                break;
+            }
+          else if (enter_str[g_i] == '\n' || enter_str[g_i] == 0)
+            {
+              break;
+            }
 
-  printf ("\n*[ (не) Bash ]*\n\n");
+          if (str_num == 0)
+            {
+              strncat (pathname[comm_n], enter_str + g_i, 1);
+              strncat (command[comm_n], enter_str + g_i, 1);
+            }
+          else
+            {
+              strncat (args[comm_n], enter_str + g_i, 1);
+            }
+        }
+    }
+  else
+    {
+      for (g_i = from_n; g_i < to_n; g_i++)
+        {
+          if (enter_str[g_i] == ' ')
+            {
+              str_num++;
 
+              if (str_num != 2)
+                continue;
+              else
+                break;
+            }
+          else if (enter_str[g_i] == '\n')
+            {
+              break;
+            }
+          else if (enter_str[g_i] == '/')
+            {
+              slash_numb = g_i;
+            }
+
+          if (str_num < 1)
+            {
+              strncat (pathname[comm_n], enter_str + g_i, 1);
+            }
+          else
+            {
+              if (str_num == 1)
+                {
+                  for (int j = slash_numb; j < g_i - 1; j++)
+                    {
+                      strncat (command[comm_n], enter_str + g_i, 1);
+                    }
+
+                  str_num++;
+                }
+
+              strncat (args[comm_n], enter_str + g_i, 1);
+            }
+        }
+    }
+}
+
+void
+CommandPrepare ()
+{
   while (1)
     {
-
-      str_num = 0;
       slash_numb = 0;
-      need_pipe = false;
+      pipe_count = 0;
+      pipe_pos = 0;
 
-      for (i = 0; i < 257; i++)
+      for (g_i = 0; g_i < 2; g_i++)
         {
-          enter_str[i] = 0;
-          pathname[i] = 0;
-          command[i] = 0;
-          args[i] = 0;
+          for (int j = 0; j < 257; j++)
+            {
+              enter_str[j] = 0;
+              pathname[g_i][j] = 0;
+              command[g_i][j] = 0;
+              args[g_i][j] = 0;
+            }
         }
 
-      i = 0;
+      g_i = 0;
 
-      while (i < 256 && (enter_str[i] = getchar ()) != '\n')
+      printf ("(не) Bash > ");
+      while (g_i < 256 && (enter_str[g_i] = getchar ()) != '\n')
         {
-          i++;
+          g_i++;
         }
-      enter_str[i] = 0;
+
+      enter_str[g_i] = 0;
 
       if (strcmp (enter_str, "exit") == 0)
         {
           printf ("*Выходим...\n");
           break;
         }
+      printf ("\n");
 
-      for (i = 0; i < strlen (enter_str); i++)
+      for (g_i = 0; g_i < strlen (enter_str); g_i++)
         {
-          if (enter_str[i] == '|')
+          if (enter_str[g_i] == '|')
             {
-              need_pipe = true;
+              pipe_count++;
+              pipe_pos = g_i; //
+
               break;
             }
         }
 
-      if (need_pipe == false)
+      if (pipe_count == 0)
         {
-          if (enter_str[0] != '/' && enter_str[0] != '.')
-            {
-              strncpy (pathname, usr_bin_path, strlen (usr_bin_path));
-              for (i = 0; i < 257; i++)
+          CommandConstruct (0, 0, 257);
+
+          if (D_ERRCHECK_fork == 0)
+            { // CHILD
+              if ((execl (pathname[0], command[0], args[0], NULL)) == -1)
                 {
-                  if (enter_str[i] == ' ')
-                    {
-                      str_num++;
-
-                      if (str_num != 2)
-                        continue;
-                      else
-                        break;
-                    }
-                  else if (enter_str[i] == '\n' || enter_str[i] == 0)
-                    {
-                      break;
-                    }
-
-                  if (str_num == 0)
-                    {
-                      strncat (pathname, enter_str + i, 1);
-                      strncat (command, enter_str + i, 1);
-                    }
-                  else
-                    {
-                      strncat (args, enter_str + i, 1);
-                    }
+                  perror ("execl _0");
+                  exit (EXIT_FAILURE);
                 }
             }
           else
-            {
-              for (i = 0; i < 257; i++)
-                {
-                  if (enter_str[i] == ' ')
-                    {
-                      str_num++;
+            { // PARENT
 
-                      if (str_num != 2)
-                        continue;
-                      else
-                        break;
-                    }
-                  else if (enter_str[i] == '\n')
-                    {
-                      break;
-                    }
-                  else if (enter_str[i] == '/')
-                    {
-                      slash_numb = i;
-                    }
-
-                  if (str_num < 1)
-                    {
-                      strncat (pathname, enter_str + i, 1);
-                    }
-                  else
-                    {
-                      if (str_num == 1)
-                        {
-                          for (int j = slash_numb; j < i - 1; j++)
-                            {
-                              strncat (command, enter_str + i, 1);
-                            }
-
-                          str_num++;
-                        }
-
-                      strncat (args, enter_str + i, 1);
-                    }
-                }
+              D_ERRCHECK_wait;
             }
         }
       else
         {
-        }
+          CommandConstruct (0, 0, pipe_pos - 1);
+          CommandConstruct (1, pipe_pos + 2, 257);
 
-      if (D_ERRCHECK_fork == 0)
-        { // CHILD
-          if ((execl (pathname, command, args, NULL)) == -1)
+          if (pipe (pipe_des) == -1)
             {
-              perror ("execl");
+              perror ("pipe");
               exit (EXIT_FAILURE);
             }
-        }
-      else
-        { // PARENT
 
-          D_ERRCHECK_wait;
+          if (D_ERRCHECK_fork == 0)
+            { // CHILD
+              dup2 (pipe_des[1], 1);
+              if ((execl (pathname[0], command[0], args[0], NULL)) == -1)
+                {
+                  perror ("execl _1");
+                  exit (EXIT_FAILURE);
+                }
+            }
+          else
+            { // PARENT
+              D_ERRCHECK_wait;
+
+              if (D_ERRCHECK_fork == 0)
+                { // CHILD
+                  dup2 (pipe_des[0], 0);
+                  if ((execl (pathname[1], command[1], args[1], NULL)) == -1)
+                    {
+                      perror ("execl _2");
+                      exit (EXIT_FAILURE);
+                    }
+                }
+              else
+                { // PARENT
+                  D_ERRCHECK_wait; // grep почему-то не завершается вообще, а
+                                   // просто до бесконечности ожидает ввода
+                }
+            }
         }
     }
+}
+
+int
+main ()
+{
+  printf ("\n*[ (не) Bash ]*\n\n");
+
+  CommandPrepare ();
 
   printf ("\n*[ Bash ]*\n\n");
 

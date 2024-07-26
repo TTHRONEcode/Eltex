@@ -5,9 +5,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-// #include "./../../Task10_Proc/10_ERRCHECKER.h"
-// #include "./../../Task10_Proc/10_printf_proc_p_pid.h"
-
 int
 main ()
 {
@@ -22,11 +19,11 @@ main ()
 
   printf ("%s\n", str_r);
 
-  // if (unlink (fifo_path) != 0)
-  //   {
-  //     perror ("unlink");
-  //     return 1;
-  //   }
+  if (unlink (fifo_path) != 0)
+    {
+      perror ("unlink");
+      return 1;
+    }
 
   exit (EXIT_SUCCESS);
 }
