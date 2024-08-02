@@ -10,8 +10,8 @@ REMOVE = rm -rf *.o $(targetS) $(targetC) $(targetG)
 all: $(targetS) $(targetC)
 	@echo Done!
 
-$(targetS): $(targetS).o $(targetG).o
-	$(CC) $(targetS).o $(targetG).o -o $(targetS) -lncurses
+$(targetS): $(targetS).o
+	$(CC) $(targetS).o -o $(targetS)
 
 $(targetC): $(targetC).o $(targetG).o
 	$(CC) $(targetC).o $(targetG).o -o $(targetC) -lncurses

@@ -1,3 +1,4 @@
+#include <curses.h>
 #include <err.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -20,6 +21,8 @@ enum
   MODE_LOGIN,
   MODE_MESSAGE
 };
+char **other_id;
+int clients_count;
 
 char **other_clients_msgs, **other_clients_msgs_names;
 char *this_client_id, *msg_str_to_send, this_client_name[MSG_SIZE / 2],
@@ -36,132 +39,169 @@ pthread_t threads[2];
 int *thread_ext_status, dont_need_copy;
 
 void
-ClearStdin ()
-{
-  int c;
-  while ((c = fgetc (stdin)) != EOF && c != '\n')
-    ;
-}
-
-void
 ClientExit ()
 {
-  int s;
-  s = pthread_cancel (threads[0]);
-  if (s != 0)
-    err (EXIT_FAILURE, "pthread_candel, line:%d", __LINE__);
-  s = pthread_cancel (threads[1]);
-  if (s != 0)
-    err (EXIT_FAILURE, "pthread_candel, line:%d", __LINE__);
+
+  int ret_mq_send = mq_send (mqd_server, this_client_id,
+                             strlen (this_client_id), MQ_T_CLIENT_EXIT);
+  if (ret_mq_send == -1)
+    err (EXIT_FAILURE, "mq_send");
 
   for (int i = 0; i < other_clients_msgs_count; i++)
     {
       free (other_clients_msgs[i]);
       free (other_clients_msgs_names[i]);
     }
+  for (int i = 0; i < clients_count; i++)
+    {
+      free (other_id[i]);
+    }
+
+  free (other_id);
   free (other_clients_msgs);
   free (other_clients_msgs_names);
 
-  free (this_client_id);
-
   mq_close (mqd_client);
+  mq_close (mqd_server);
 
   mq_unlink (this_client_id);
+  free (this_client_id);
+
+  DelWins ();
+
+  endwin ();
 
   exit (EXIT_SUCCESS);
+
+  int pthread_ex_status;
+  pthread_ex_status = pthread_cancel (threads[1]);
+  if (pthread_ex_status != 0)
+    err (EXIT_FAILURE, "pthread_cancel, line:%d", __LINE__);
+  pthread_ex_status = pthread_cancel (threads[0]);
+  if (pthread_ex_status != 0)
+    err (EXIT_FAILURE, "pthread_cancel, line:%d", __LINE__);
+}
+
+void
+MsgsAdd (char *local_msg_str, int is_this)
+{
+
+  int n_start = 0;
+  for (int i = 0; i < strlen (local_msg_str); i++)
+    {
+      if (local_msg_str[i] == '\n')
+        {
+          n_start = i;
+          break;
+        }
+    }
+
+  other_clients_msgs_count++;
+
+  other_clients_msgs_names = realloc (
+      other_clients_msgs_names, other_clients_msgs_count * sizeof (char *));
+  other_clients_msgs_names[other_clients_msgs_count - 1]
+      = calloc (MSG_SIZE + 3, sizeof (char));
+
+  other_clients_msgs = realloc (other_clients_msgs,
+                                other_clients_msgs_count * sizeof (char *));
+  other_clients_msgs[other_clients_msgs_count - 1]
+      = calloc (MSG_SIZE + 3, sizeof (char));
+
+  if (is_this == 0)
+    {
+
+      strncpy (other_clients_msgs_names[other_clients_msgs_count - 1],
+               local_msg_str, n_start);
+      strncpy (other_clients_msgs[other_clients_msgs_count - 1],
+               local_msg_str + n_start + 1,
+               strlen (local_msg_str) - n_start - 1);
+    }
+  else
+    {
+      strncpy (other_clients_msgs_names[other_clients_msgs_count - 1], "", 2);
+      strncpy (other_clients_msgs[other_clients_msgs_count - 1],
+               local_msg_str + n_start + 1,
+               strlen (local_msg_str) - n_start - 1);
+    }
+
+  RenderInputMsgs (is_this);
+}
+
+static void
+CleanReceiveMsg ()
+{
+  int strlen_n = strlen (recieved_msg_str);
+  for (int i = 0; i < strlen_n; i++)
+    {
+      recieved_msg_str[i] = 0;
+    }
 }
 
 // 0 = for login
 // 1 = for messages
-void
-EnterStdinString (int mode)
-{
-
-  int strlen_for = strlen (entered_str);
-  for (int i = 0; i < strlen_for; i++)
-    {
-      entered_str[i] = 0;
-    }
-
-  int g_i = 0;
-  while (g_i < MSG_SIZE / 2)
-    {
-      entered_str[g_i] = fgetc (stdin);
-
-      if (entered_str[g_i] == '\n' || (mode == 0 && entered_str[g_i] == ' '))
-        {
-          if (mode == 0 && entered_str[g_i] == ' ')
-            {
-              ClearStdin ();
-              entered_str[g_i] = 0;
-            }
-          break;
-        }
-
-      g_i++;
-    }
-
-  entered_str[g_i] = 0;
-}
-
 void *
 ThreadToReceive (void *void_ptr)
 {
   while (1)
     {
-      ret_mq_receive = mq_receive (mqd_client, recieved_msg_str,
-                                   MSG_SIZE + 3, &ret_receive_prior);
-      if (dont_need_copy == true && ret_receive_prior == MQ_T_COPIES)
-        {
-          int strlen_n = strlen (recieved_msg_str);
-          for (int i = 0; i < strlen_n; i++)
-            {
-              recieved_msg_str[i] = 0;
-            }
-          dont_need_copy = false;
-          continue;
-        }
-
-      other_clients_msgs_count++;
-
+      ret_mq_receive = mq_receive (mqd_client, recieved_msg_str, MSG_SIZE + 3,
+                                   &ret_receive_prior);
       if (ret_mq_receive == -1)
         err (EXIT_FAILURE, "mq_receive");
 
-      int n_start = 0;
-      for (int i = 0; i < strlen (recieved_msg_str); i++)
+      if (ret_receive_prior == MQ_T_COPIES)
         {
-          if (recieved_msg_str[i] == '\n')
+          if (dont_need_copy == true)
             {
-              n_start = i;
-              break;
+              CleanReceiveMsg ();
+              dont_need_copy = false;
+              continue;
             }
         }
-      other_clients_msgs_names
-          = realloc (other_clients_msgs_names,
-                     other_clients_msgs_count * sizeof (char *));
-      other_clients_msgs_names[other_clients_msgs_count - 1]
-          = calloc (MSG_SIZE + 3, sizeof (char));
-
-      other_clients_msgs = realloc (
-          other_clients_msgs, other_clients_msgs_count * sizeof (char *));
-      other_clients_msgs[other_clients_msgs_count - 1]
-          = calloc (MSG_SIZE + 3, sizeof (char));
-
-      strncpy (other_clients_msgs_names[other_clients_msgs_count - 1],
-               recieved_msg_str, n_start);
-      strncpy (other_clients_msgs[other_clients_msgs_count - 1],
-               recieved_msg_str + n_start + 1,
-               strlen (recieved_msg_str) - n_start - 1);
-
-      printf ("%s > %s\n",
-              other_clients_msgs_names[other_clients_msgs_count - 1],
-              other_clients_msgs[other_clients_msgs_count - 1]);
-
-      int strlen_n = strlen (recieved_msg_str);
-      for (int i = 0; i < strlen_n; i++)
+      else if (ret_receive_prior == MQ_T_CLIENT_ENTER)
         {
-          recieved_msg_str[i] = 0;
+
+          clients_count++;
+
+          other_id = realloc (other_id, clients_count * sizeof (char *));
+          other_id[clients_count - 1] = calloc (MSG_SIZE + 3, sizeof (char));
+
+          strncpy (other_id[clients_count - 1], recieved_msg_str,
+                   strlen (recieved_msg_str));
+          RenderIds ();
+          CleanReceiveMsg ();
+          continue;
         }
+      else if (ret_receive_prior == MQ_T_CLIENT_EXIT)
+        {
+
+          for (int i = 0; i < clients_count; i++)
+            {
+              if (strcmp (other_id[i], recieved_msg_str) == 0)
+                {
+                  strncpy (other_id[i], other_id[clients_count - 1],
+                           strlen (other_id[i]));
+                  free (other_id[clients_count - 1]);
+
+                  clients_count--;
+
+                  RenderIds ();
+                  CleanReceiveMsg ();
+                  break;
+                }
+            }
+
+          continue;
+        }
+      if (ret_receive_prior == MQ_T_SERVER_EXIT)
+        {
+          ClientExit ();
+        }
+
+      MsgsAdd (recieved_msg_str, 0);
+
+      CleanReceiveMsg ();
     }
 
   return NULL;
@@ -178,13 +218,11 @@ ThreadToSend (void *void_ptr)
 
   while (1)
     {
-      printf ("%s > ", this_client_name);
+      EnterStdinString (MODE_MESSAGE, entered_str);
 
-      EnterStdinString (MODE_MESSAGE);
-
-      if (strcmp (entered_str, "exit") == 0)
+      char exit_str[5] = "exit";
+      if (strcmp (entered_str, exit_str) == 0)
         {
-          printf ("*Выходим...\n");
           ClientExit ();
         }
 
@@ -202,6 +240,8 @@ ThreadToSend (void *void_ptr)
       if (ret_mq_send == -1)
         err (EXIT_FAILURE, "mq_send");
 
+      MsgsAdd (msg_str_to_send, 1);
+
       free (msg_str_to_send);
     }
 
@@ -211,8 +251,8 @@ ThreadToSend (void *void_ptr)
 void
 SetThisUniqClientId ()
 {
-  printf ("Введите логин: ");
-  EnterStdinString (MODE_LOGIN);
+  PutLoginText ();
+  EnterStdinString (MODE_LOGIN, entered_str);
 
   time_t time_not_str = time (NULL);
   char *time_to_str = asctime (gmtime (&time_not_str));
@@ -227,7 +267,7 @@ SetThisUniqClientId ()
 
   strncpy (this_client_name, entered_str, strlen (entered_str));
 
-  printf ("%s", this_client_id);
+  PrintThisId (this_client_id);
 }
 
 void
@@ -240,7 +280,10 @@ OpenMessageQueues ()
 
   mqd_server = mq_open (name_server, O_WRONLY);
   if (mqd_server == -1)
-    err (EXIT_FAILURE, "mq_open server");
+    {
+      SignalExit (0);
+      err (EXIT_FAILURE, "mq_open server");
+    }
 }
 
 void
@@ -268,7 +311,7 @@ StartAndWaitThread ()
 void
 InitClient ()
 {
-  // InitGraphic ();
+  InitGraphic ();
 
   SetThisUniqClientId ();
 
