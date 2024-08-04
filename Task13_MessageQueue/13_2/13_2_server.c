@@ -28,7 +28,6 @@ ServerExit ()
   int ret_mq_send = 0;
   for (int i = 0; i < clients_count; i++)
     {
-      printf ("AAAAAAAAAAAAAAAAAAAAAA\n");
       ret_mq_send = mq_send (mqd_client[i], "1", 2, MQ_T_SERVER_EXIT);
       if (ret_mq_send == -1)
         err (EXIT_FAILURE, "mq_receive");
