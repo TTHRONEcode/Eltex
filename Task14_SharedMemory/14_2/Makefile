@@ -1,5 +1,5 @@
 CC = gcc
-debug = -g 
+compile_flags = -Werror -pedantic-errors -Wall -Wextra -Wpedantic
 targetS = 14_2_server
 targetC = 14_2_client
 targetG = 14_2_graphic
@@ -17,7 +17,7 @@ $(targetC): $(targetC).o $(targetG).o
 	$(CC) $(targetC).o $(targetG).o  -o $(targetC) -lncurses
 
 *.o: *.c
-	$(CC) $(debug) -c *.c
+	$(CC) $(compile_flags) -c *.c
 
 clear:
 	$(REMOVE)

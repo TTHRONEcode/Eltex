@@ -23,6 +23,6 @@ void OutputStringArrayToWindowNum (char *__this_client_id_str,
                                    char *__str_array_1, char *__str_array_2,
                                    int __str_count, int __wnd_num);
 
-void SignalGraphicExit (int __sig_no);
+void SignalGraphicExit ();
 
 #endif // GRAPHIC_H
