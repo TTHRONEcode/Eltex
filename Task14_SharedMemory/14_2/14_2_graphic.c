@@ -53,8 +53,6 @@ OutputStringByMode (char *this_client_id_str, char *str_array_1,
     }
   else if (mode == WND_LEFT_MSGS_OF_CLIENTS) // output: ilya > hi!
     {
-      int chars_count = 0;
-
       for (int i = 0; i < n_to; i++)
         {
           wmove (wnd_sub_fields[mode], i, 0);
@@ -105,8 +103,6 @@ OutputStringArrayToWindowNum (char *this_client_id_str, char *str_array_1,
   int cur_wnd_max_cols = getmaxx (wnd_sub_fields[wnd_num]);
 
   int n_to = 0, n_from = 0;
-  int need_restart = 0;
-  int current_cursor_row = 0;
 
   if (str_count < cur_wnd_max_rows)
     {
@@ -217,7 +213,7 @@ ResizeWindow (int wnd_num)
   const int percent_of_col_size = 40;
 
   int stdscr_row_size, stdscr_col_size;
-  int resize_row_size, resize_col_size;
+  int resize_col_size;
 
   getmaxyx (stdscr, stdscr_row_size, stdscr_col_size);
 
@@ -312,7 +308,7 @@ RenderScreen ()
 }
 
 void
-SignalGraphicExit (int signo)
+SignalGraphicExit ()
 {
   DeleteWindows ();
   endwin ();

@@ -110,7 +110,7 @@ SharedMemoryManipulation (int manip_mode, char *char_ptr_1, char *char_ptr_2)
 
       (*shm_clients_amount)--;
 
-      SignalGraphicExit (0);
+      SignalGraphicExit ();
 
       sem_post (semaphore_main);
 
@@ -143,7 +143,7 @@ GenerateUniqId (char *name_str)
 }
 
 static void *
-ThreadWriter (void *arg)
+ThreadWriter ()
 {
   char *buffer_input_handler = NULL;
 
@@ -167,7 +167,7 @@ ThreadWriter (void *arg)
 }
 
 static void *
-ThreadReader (void *arg)
+ThreadReader ()
 {
   int past_client_amount = 0, past_messages_amount = 0;
   int sem_val = 0;
