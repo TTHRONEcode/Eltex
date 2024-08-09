@@ -39,7 +39,7 @@ main ()
 
   CheckError (shared_fd = shm_open (k_server_name, O_RDWR, 0666), "shm_open");
 
-  CheckError (ftruncate (shared_fd, 8), "ftrucate");
+  //CheckError (ftruncate (shared_fd, 8), "ftrucate");
 
   if ((ret_mmap
        = mmap (NULL, 8, PROT_READ | PROT_WRITE, MAP_SHARED, shared_fd, 0))
