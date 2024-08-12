@@ -332,11 +332,4 @@ InitGraphic ()
   refresh ();
 
   RenderScreen ();
-
-  //   wgetch (wnd_sub_fields[WND_DOWN_INPUT]);
-
-  /* wrefresh (windows[wnd_num]);
-wrefresh (fields[wnd_num]);*/
-
-  //   SignalWindowResize (0);//
 }
