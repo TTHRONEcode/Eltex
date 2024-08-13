@@ -1,5 +1,6 @@
 #include <err.h>
 #include <netinet/in.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +13,6 @@
 
 struct sockaddr_in serv, client;
 int sock_fd;
-
 socklen_t len = sizeof (struct sockaddr);
 
 static void CheckError (int __err_int, char *__err_str, int __caller_line);
@@ -30,9 +30,12 @@ CheckError (int err_int, char *err_str, int caller_line)
     PrintErrorAndExit (err_str, caller_line);
 }
 
-void
-ProcSocketClient (int loc_sock_fd, int loc_clients_fd, int this_proc_num)
+void *
+ThreadSocketClient (void *args)
 {
+  int loc_sock_fd = ((int *)args)[0], loc_clients_fd = ((int *)args)[1],
+      this_proc_num = ((int *)args)[2];
+
   char msg_recv[STR_SIZE_MAX] = { 0 };
 
   CheckError (printf ("\n*Process №%d is getting started with fd %d*\n",
@@ -58,7 +61,7 @@ ProcSocketClient (int loc_sock_fd, int loc_clients_fd, int this_proc_num)
         }
 
       CheckError (
-          printf ("*%d*\n*The request has been successfully processed*\n",
+          printf ("*%d. The request has been successfully processed*\n",
                   this_proc_num),
           "printf", __LINE__);
     }
@@ -68,9 +71,8 @@ ProcSocketClient (int loc_sock_fd, int loc_clients_fd, int this_proc_num)
               __LINE__);
 
   CheckError (close (loc_clients_fd), "close", __LINE__);
-  CheckError (close (loc_sock_fd), "close", __LINE__);
 
-  exit (EXIT_SUCCESS);
+  return NULL;
 }
 
 static void
@@ -93,10 +95,11 @@ SocketHandler ()
 
       proc_count++;
 
-      if ((fork_val = fork ()) == 0)
-        ProcSocketClient (sock_fd, clients_fd, proc_count);
-      else if (fork_val == -1)
-        PrintErrorAndExit ("fork", __LINE__);
+      int pthread_params[3] = { sock_fd, clients_fd, proc_count };
+      pthread_t thread = 0;
+      CheckError (thread = pthread_create (&thread, NULL, ThreadSocketClient,
+                                           (void *)pthread_params),
+                  "pthread_create", __LINE__);
     }
   while (1);
 }
