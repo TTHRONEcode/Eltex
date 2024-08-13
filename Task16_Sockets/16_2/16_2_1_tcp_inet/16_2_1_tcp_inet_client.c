@@ -7,8 +7,6 @@
 
 #include "./16_2_1_tcp_inet.h"
 
-#define GET_ENUM_CHAR(enum_name) (enum_name + '0')
-
 static void
 CheckError (int err_int, char *err_str, int caller_line)
 {
