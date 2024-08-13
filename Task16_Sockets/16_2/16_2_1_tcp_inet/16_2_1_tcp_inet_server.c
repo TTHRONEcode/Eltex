@@ -15,8 +15,10 @@ int sock_fd;
 
 socklen_t len = sizeof (struct sockaddr);
 
+static void CheckError (int __err_int, char *__err_str, int __caller_line);
+
 static void
-PrintError (char *err_str, int caller_line)
+PrintErrorAndExit (char *err_str, int caller_line)
 {
   err (EXIT_FAILURE, "%s: %d", err_str, caller_line);
 }
@@ -25,7 +27,7 @@ static void
 CheckError (int err_int, char *err_str, int caller_line)
 {
   if (err_int < 0)
-    PrintError (err_str, caller_line);
+    PrintErrorAndExit (err_str, caller_line);
 }
 
 void
@@ -94,7 +96,7 @@ SocketHandler ()
       if ((fork_val = fork ()) == 0)
         ProcSocketClient (sock_fd, clients_fd, proc_count);
       else if (fork_val == -1)
-        PrintError ("fork", __LINE__);
+        PrintErrorAndExit ("fork", __LINE__);
     }
   while (1);
 }
@@ -123,16 +125,25 @@ SocketInitProcClose ()
 static void
 SigExit ()
 {
-  CheckError (close (sock_fd), "close", __LINE__);
-
-  CheckError (printf ("\n"), "printf", __LINE__);
-
   exit (EXIT_SUCCESS);
+}
+
+static void
+PrepareToExit ()
+{
+  CheckError (printf ("\n[ MAIN PROC: preparing to exit... ]\n"), "printf",
+              __LINE__);
+
+  CheckError (printf ("[ MAIN PROC: closing sock_fd... ]\n"), "printf",
+              __LINE__);
+  CheckError (close (sock_fd), "close", __LINE__);
+  CheckError (printf ("[ MAIN PROC: bye-bye! ]\n\n"), "printf", __LINE__);
 }
 
 int
 main ()
 {
+  atexit (PrepareToExit);
   signal (SIGINT, SigExit);
 
   SocketInitProcClose ();
