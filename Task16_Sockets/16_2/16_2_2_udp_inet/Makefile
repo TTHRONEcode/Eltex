@@ -1,5 +1,5 @@
 CC = gcc
-compile_flags = -g #-Werror -pedantic-errors -Wall -Wextra -Wpedantic //TODO
+compile_flags = -Werror -pedantic-errors -Wall -Wextra -Wpedantic
 targetS = 16_2_2_udp_inet_server_main
 targetS_SUB = 16_2_2_udp_inet_server_sub
 targetC = 16_2_2_udp_inet_client

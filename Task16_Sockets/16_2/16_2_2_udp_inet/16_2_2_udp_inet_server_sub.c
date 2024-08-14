@@ -14,12 +14,31 @@
 mqd_t message_queue_of_server;
 int this_sub_server_port;
 
+static void SigExit ();
+static void PrepareToExit ();
+static void PrintErrorStrAndExit (char *__err_str, int __caller_line);
 static void SubServerToClientInteraction (int __this_sub_server_port);
+
+int
+main (int argc __attribute__ ((unused)), char *argv[])
+{
+  if (atexit (PrepareToExit) != 0)
+    PrintErrorStrAndExit ("atexit", __LINE__);
+
+  if (signal (SIGINT, SigExit) == SIG_ERR)
+    PrintErrorStrAndExit ("signal", __LINE__);
+
+  this_sub_server_port = atoi (argv[1]);
+  SubServerToClientInteraction (this_sub_server_port);
+
+  return 0;
+}
 
 static void
 PrintErrorStrAndExit (char *err_str, int caller_line)
 {
-  err (EXIT_FAILURE, "[ %9s [%d]: %s: %d ]", k_server_types_str[SERV_T_CLIENT],
+  err (EXIT_FAILURE, "[ %9s [%d]: %s: %d ]",
+       k_server_types_str[SERV_T_SUB_SERV],
        k_server_main_port + this_sub_server_port, err_str, caller_line);
 }
 
@@ -53,21 +72,6 @@ PrepareToExit ()
               "printf", __LINE__);
 }
 
-int
-main (int argc, char *argv[])
-{
-  if (atexit (PrepareToExit) != 0)
-    PrintErrorStrAndExit ("atexit", __LINE__);
-
-  if (signal (SIGINT, SigExit) == SIG_ERR)
-    PrintErrorStrAndExit ("signal", __LINE__);
-
-  this_sub_server_port = atoi (argv[1]);
-  SubServerToClientInteraction (this_sub_server_port);
-
-  return 0;
-}
-
 static void
 SubServerToClientInteraction (int this_sub_server_port)
 {
@@ -98,7 +102,7 @@ SubServerToClientInteraction (int this_sub_server_port)
       bind (sub_server_fd, (struct sockaddr *)&sub_server, sockaddr_len),
       "bind", __LINE__);
 
-  CheckError (printf ("\n*Process №%d is getting started with port %d*\n",
+  CheckError (printf ("\n*Process %d is getting started with port %d*\n",
                       this_sub_server_port,
                       k_server_main_port + this_sub_server_port),
               "printf", __LINE__);
@@ -112,7 +116,9 @@ SubServerToClientInteraction (int this_sub_server_port)
       if (is_free == true)
         {
           CheckError (
-              printf ("*The process №%d is now busy*\n", this_sub_server_port),
+              printf ("* %s [%d]: start to process some... processes *\n",
+                      k_server_types_str[SERV_T_SUB_SERV],
+                      this_sub_server_port),
               "printf", __LINE__);
           is_free = false;
         }
@@ -126,14 +132,16 @@ SubServerToClientInteraction (int this_sub_server_port)
                               (struct sockaddr *)&sub_server, sockaddr_len),
                       "recvfrom", __LINE__);
 
-          CheckError (
-              printf ("\n*№%d: The request has been successfully processed*\n",
-                      this_sub_server_port),
-              "printf", __LINE__);
+          CheckError (printf ("\n* %s [%d]: The request has been successfully "
+                              "processed *\n",
+                              k_server_types_str[SERV_T_SUB_SERV],
+                              this_sub_server_port),
+                      "printf", __LINE__);
         }
       else if (msg_recv[0] == k_MSG_T_EXIT)
         {
-          printf ("\n*Client exit*\n");
+          printf ("\n* %s [%d]: exited *\n",
+                  k_server_types_str[SERV_T_SUB_SERV], this_sub_server_port);
 
           // уведомляем сервер о том, что этот процесс освободился
           CheckError (snprintf (mq_msg_send, STR_SIZE_MAX - 1, "%s:%d",
@@ -151,21 +159,20 @@ SubServerToClientInteraction (int this_sub_server_port)
               mq_msg_send[i] = 0;
             }
 
-          printf ("*The process №%d is now free*\n"
-                  "*Wait for another client...*\n",
-                  this_sub_server_port);
+          printf ("* %s [%d]: now free *\n"
+                  "* %s [%d]: wait for another client... *\n",
+                  k_server_types_str[SERV_T_SUB_SERV], this_sub_server_port,
+                  k_server_types_str[SERV_T_SUB_SERV], this_sub_server_port);
 
           is_free = true;
         }
     }
   while (1);
 
-  CheckError (printf ("*Process №%d is exiting*\n", this_sub_server_port),
+  CheckError (printf ("* %s [%d]: exiting... *\n",
+                      k_server_types_str[SERV_T_SUB_SERV],
+                      this_sub_server_port),
               "printf", __LINE__);
-
-  CheckError (close (sub_server_fd), "close", __LINE__);
-
-  mq_close (message_queue_of_server);
 
   exit (EXIT_SUCCESS);
 }

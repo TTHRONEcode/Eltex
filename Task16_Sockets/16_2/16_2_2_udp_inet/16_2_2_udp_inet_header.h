@@ -1,5 +1,5 @@
-#ifndef TCP_INET_H_
-#define TCP_INET_H_
+#ifndef UDP_INET_H_
+#define UDP_INET_H_
 
 #define STR_SIZE_MAX 255
 
@@ -21,4 +21,4 @@ typedef enum
   SERV_T_CLIENT
 } ServerTypes;
 
-#endif // end TCP_INET_H_
+#endif // end UDP_INET_H_

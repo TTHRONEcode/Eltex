@@ -26,7 +26,7 @@ CheckError (int err_int, char *err_str, int caller_line)
 static void
 ServerInteraction (int sock_fd)
 {
-  char msg_recv[255] = { 0 };
+  char msg_recv[STR_SIZE_MAX] = { 0 };
   char typed_char[STR_SIZE_MAX] = { 0 };
 
   do
@@ -71,9 +71,6 @@ InitConnectionToSubServer ()
 {
   struct sockaddr_in serv;
   int sock_fd;
-
-  char *msg_send = "Hi!!";
-  char msg_recv[STR_SIZE_MAX];
 
   socklen_t len = sizeof (struct sockaddr);
 

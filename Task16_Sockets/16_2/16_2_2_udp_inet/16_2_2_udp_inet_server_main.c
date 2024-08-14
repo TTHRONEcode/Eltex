@@ -16,24 +16,29 @@
 
 #include "./16_2_2_udp_inet_header.h"
 
+// init variables
 const char *const k_exec_name = "16_2_2_udp_inet_server_sub";
 const char *const k_exec_path_name = "./16_2_2_udp_inet_server_sub";
+const int k_servers_pool_amount = 2;
 
 mqd_t message_queue_of_server;
-struct mq_attr mq_attr_struct = { 0, 10, STR_SIZE_MAX, 0, 0 };
+struct mq_attr mq_attr_struct = { 0, 10, STR_SIZE_MAX, 0, { 0 } };
 
 pid_t *processes_pid;
 int processes_amount;
 typedef enum
 {
-  PROC_STAT_HAVENOT_FREE_PROC = -1,
-  PROC_STAT_FREE,
+  PROC_STAT__TRY_FIND = -3,
+  PROC_STAT__POOL_CREATE,
+  PROC_STAT__HAVENOT_FREE_PROC,
+  PROC_STAT_FREE = 0,
   PROC_STAT_BUSY
 } ProcessStatus;
 
 int main_server_fd;
 struct sockaddr_in main_server;
 socklen_t sockaddr_len = sizeof (struct sockaddr);
+//
 
 static void
 PrintErrorStrAndExit (char *err_str, int caller_line)
@@ -50,13 +55,64 @@ CheckError (int err_int, char *err_str, int caller_line)
     PrintErrorStrAndExit (err_str, caller_line);
 }
 
+static int
+FindFreeProcOrCreateIt (int proc_stat_mode)
+{
+  int free_port_num = PROC_STAT__HAVENOT_FREE_PROC;
+  pid_t fork_val = 0;
+
+  if (proc_stat_mode == PROC_STAT__TRY_FIND)
+    {
+      for (int i = 0; i < processes_amount; i++)
+        {
+          if (processes_pid[i] == PROC_STAT_FREE)
+            {
+              processes_pid[i] = PROC_STAT_BUSY;
+              free_port_num = i + 1;
+
+              break;
+            }
+        }
+    }
+
+  if (free_port_num == PROC_STAT__HAVENOT_FREE_PROC)
+    {
+      processes_amount++;
+
+      pid_t *temp_pid_ptr = (pid_t *)realloc (
+          processes_pid, processes_amount * sizeof (pid_t));
+      if (temp_pid_ptr == NULL)
+        PrintErrorStrAndExit ("realloc", __LINE__);
+      processes_pid = temp_pid_ptr;
+
+      processes_pid[processes_amount - 1]
+          = free_port_num == PROC_STAT__TRY_FIND ? PROC_STAT_BUSY
+                                                 : PROC_STAT_FREE;
+
+      free_port_num = processes_amount;
+
+      // заготавливаем суб-сервер под нового клиента
+      if ((fork_val = fork ()) == 0)
+        {
+          char port_str[20];
+          snprintf (port_str, sizeof (port_str) / sizeof (port_str[0]), "%d",
+                    free_port_num);
+          execl (k_exec_path_name, k_exec_name, port_str, (char *)NULL);
+          PrintErrorStrAndExit ("execl", __LINE__);
+        }
+      else if (fork_val == -1)
+        PrintErrorStrAndExit ("fork", __LINE__);
+    }
+
+  return free_port_num;
+}
+
 static void
 RedirectClientsToSubServers ()
 {
-  pid_t fork_val = 0;
+  int free_port_num = 0;
   char message_buf[STR_SIZE_MAX] = { 0 };
   struct sockaddr_in local_client;
-  int free_port_num = 0;
 
   // инициализируем и открываем очередь сообщений главного сервера для чтения
   char mq_msg_recv[STR_SIZE_MAX] = { 0 };
@@ -124,48 +180,10 @@ RedirectClientsToSubServers ()
         }
       errno = 0;
 
-      free_port_num = PROC_STAT_HAVENOT_FREE_PROC;
-
-      for (int i = 0; i < processes_amount; i++)
-        {
-          if (processes_pid[i] == PROC_STAT_FREE)
-            {
-              processes_pid[i] = PROC_STAT_BUSY;
-              free_port_num = i + 1;
-
-              break;
-            }
-        }
-
-      if (free_port_num == PROC_STAT_HAVENOT_FREE_PROC)
-        {
-          processes_amount++;
-
-          pid_t *temp_pid_ptr = (pid_t *)realloc (
-              processes_pid, processes_amount * sizeof (pid_t));
-          if (temp_pid_ptr == NULL)
-            PrintErrorStrAndExit ("realloc", __LINE__);
-          processes_pid = temp_pid_ptr;
-
-          processes_pid[processes_amount - 1] = PROC_STAT_BUSY;
-
-          free_port_num = processes_amount;
-
-          // заготавливаем суб-сервер под нового клиента
-          if ((fork_val = fork ()) == 0)
-            {
-              char port_str[20];
-              snprintf (port_str, sizeof (port_str) / sizeof (port_str[0]),
-                        "%d", free_port_num);
-              execl (k_exec_path_name, k_exec_name, port_str, (char *)NULL);
-              PrintErrorStrAndExit ("execl", __LINE__);
-            }
-          else if (fork_val == -1)
-            PrintErrorStrAndExit ("fork", __LINE__);
-        }
+      free_port_num = FindFreeProcOrCreateIt (PROC_STAT__TRY_FIND);
 
       // отправляем клиенту порт суб-сервера
-      CheckError (sendto (main_server_fd, &(free_port_num), sizeof (int), 0,
+      CheckError (sendto (main_server_fd, &free_port_num, sizeof (int), 0,
                           (struct sockaddr *)&local_client, sockaddr_len),
                   "recvfrom", __LINE__);
     }
@@ -238,6 +256,11 @@ main ()
     PrintErrorStrAndExit ("signal", __LINE__);
 
   InitMainServer ();
+
+  for (int i = 0; i < k_servers_pool_amount; i++)
+    {
+      FindFreeProcOrCreateIt (PROC_STAT__POOL_CREATE);
+    }
 
   RedirectClientsToSubServers ();
 
