@@ -10,18 +10,17 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 
-#include "./16_2_1_udp_inet.h" //TODO rename to 2_2
+#include "./16_2_2_udp_inet_header.h"
 
-const char *const k_template_i_am_free = "FREE";
-const char *const k_message_queue_name = "/16_2_2_UDP_INET_SERVER";
+const char *const k_exec_name = "16_2_2_udp_inet_server_sub";
+const char *const k_exec_path_name = "./16_2_2_udp_inet_server_sub";
+
 mqd_t message_queue_of_server;
 struct mq_attr mq_attr_struct = { 0, 10, STR_SIZE_MAX, 0, 0 };
-
-const char *const k_servers_types_str[2] = { "MAIN SERV", "_SUB SERV" };
-int this_server_type_num, this_server_port;
 
 pid_t *processes_pid;
 int processes_amount;
@@ -36,14 +35,12 @@ int main_server_fd;
 struct sockaddr_in main_server;
 socklen_t sockaddr_len = sizeof (struct sockaddr);
 
-static void CheckError (int __err_int, char *__err_str, int __caller_line);
-
 static void
 PrintErrorStrAndExit (char *err_str, int caller_line)
 {
   err (EXIT_FAILURE, "[ %9s [%d]: %s: %d ]",
-       k_servers_types_str[this_server_type_num],
-       k_server_main_port + this_server_port, err_str, caller_line);
+       k_server_types_str[SERV_T_MAIN_SERV], k_server_main_port, err_str,
+       caller_line);
 }
 
 static void
@@ -51,107 +48,6 @@ CheckError (int err_int, char *err_str, int caller_line)
 {
   if (err_int < 0)
     PrintErrorStrAndExit (err_str, caller_line);
-}
-
-static void
-SubServerToClientInteraction (int this_sub_server_port)
-{
-  bool is_free = true;
-
-  // переоткрываем очередь сообщений уже для записи
-  char mq_msg_send[STR_SIZE_MAX] = { 0 };
-
-  // CheckError (mq_close (message_queue_of_server), "mq_close", __LINE__);
-  // CheckError (message_queue_of_server
-  //             = mq_open (k_message_queue_name, O_WRONLY),
-  //             "mq_open", __LINE__);
-
-  // инициализируем суб-сервер с новым портом
-  char msg_recv[STR_SIZE_MAX] = { 0 };
-  int sub_server_fd = 0;
-  struct sockaddr_in sub_server = { 0 };
-
-  sub_server.sin_family = AF_INET;
-  sub_server.sin_port = htons (k_server_main_port + this_sub_server_port);
-  sub_server.sin_addr.s_addr = INADDR_ANY;
-
-  // настраиваем соединение
-  CheckError (sub_server_fd = socket (sub_server.sin_family, SOCK_DGRAM, 0),
-              "socket", __LINE__);
-  CheckError (
-      bind (sub_server_fd, (struct sockaddr *)&sub_server, sockaddr_len),
-      "bind", __LINE__);
-
-  CheckError (printf ("\n*Process №%d is getting started with port %d*\n",
-                      this_sub_server_port,
-                      k_server_main_port + this_sub_server_port),
-              "printf", __LINE__);
-  do
-    {
-      // ждём сообщения клиента и обрабатываем его
-      CheckError (recvfrom (sub_server_fd, msg_recv, STR_SIZE_MAX, 0,
-                            (struct sockaddr *)&sub_server, &sockaddr_len),
-                  "recvfrom", __LINE__);
-
-      if (is_free == true)
-        {
-          CheckError (
-              printf ("*The process №%d is now busy*\n", this_sub_server_port),
-              "printf", __LINE__);
-          is_free = false;
-        }
-
-      if (msg_recv[0] == k_MSG_T_GIVE_ME_TIME)
-        {
-          time_t time_not_str = time (NULL);
-          char *time_to_str = asctime (gmtime (&time_not_str));
-
-          CheckError (sendto (sub_server_fd, time_to_str, sockaddr_len, 0,
-                              (struct sockaddr *)&sub_server, sockaddr_len),
-                      "recvfrom", __LINE__);
-
-          CheckError (
-              printf ("\n*№%d: The request has been successfully processed*\n",
-                      this_sub_server_port),
-              "printf", __LINE__);
-        }
-      else if (msg_recv[0] == k_MSG_T_EXIT)
-        {
-          printf ("\n*Client exit*\n");
-
-          // уведомляем сервер о том, что этот процесс освободился
-          CheckError (snprintf (mq_msg_send, STR_SIZE_MAX - 1, "%s:%d",
-                                k_template_i_am_free, this_sub_server_port),
-                      "snprintf", __LINE__);
-          mq_msg_send[strlen (mq_msg_send)] = 0;
-
-          CheckError (
-              mq_send (message_queue_of_server, mq_msg_send, STR_SIZE_MAX, 1),
-              "mq_send", __LINE__);
-          //
-
-          for (int i = 0; i < STR_SIZE_MAX; i++)
-            {
-              mq_msg_send[i] = 0;
-            }
-
-          printf ("*The process №%d is now free*\n"
-                  "*Wait for another client...*\n",
-                  this_sub_server_port);
-
-          is_free = true;
-        }
-    }
-  while (1);
-
-  CheckError (printf ("*Process №%d is exiting*\n", this_sub_server_port),
-              "printf", __LINE__);
-
-  CheckError (close (sub_server_fd), "close", __LINE__);
-
-  mq_close (message_queue_of_server);
-
-  exit (EXIT_SUCCESS);
 }
 
 static void
@@ -173,8 +69,8 @@ RedirectClientsToSubServers ()
               "mq_open", __LINE__);
 
   CheckError (printf ("[ %9s [%d]: Waiting for clients to redirect ]\n",
-                      k_servers_types_str[this_server_type_num],
-                      k_server_main_port + this_server_port),
+                      k_server_types_str[SERV_T_MAIN_SERV],
+                      k_server_main_port),
               "printf", __LINE__);
 
   while (1)
@@ -186,7 +82,8 @@ RedirectClientsToSubServers ()
           mq_read_bytes_amount = mq_receive (message_queue_of_server,
                                              mq_msg_recv, STR_SIZE_MAX, NULL);
 
-          if (mq_msg_recv[0] != 0)
+          // если пришло сообщение об освобождении другого процесса
+          if (errno != EAGAIN)
             {
               if (mq_read_bytes_amount == -1)
                 PrintErrorStrAndExit ("mq_receive", __LINE__);
@@ -203,26 +100,23 @@ RedirectClientsToSubServers ()
                           = PROC_STAT_FREE;
                     }
                 }
-
-              mq_msg_recv[0] = 0;
             }
-
           errno = 0;
 
           recvfrom_ret = recvfrom (
               main_server_fd, message_buf, sockaddr_len, MSG_DONTWAIT,
               (struct sockaddr *)&local_client, &sockaddr_len);
 
+          // если пришло сообщение от клиента
           if (errno != EAGAIN && errno != EWOULDBLOCK)
             {
               if (recvfrom_ret == -1)
                 PrintErrorStrAndExit ("recvfrom", __LINE__);
               else
                 {
-                  CheckError (
-                      printf ("\n[ %9s: new client! ]\n",
-                              k_servers_types_str[this_server_type_num]),
-                      "printf", __LINE__);
+                  CheckError (printf ("\n[ %9s: new client! ]\n",
+                                      k_server_types_str[SERV_T_MAIN_SERV]),
+                              "printf", __LINE__);
                   break; // клиент подключился!
                 }
             }
@@ -260,9 +154,11 @@ RedirectClientsToSubServers ()
           // заготавливаем суб-сервер под нового клиента
           if ((fork_val = fork ()) == 0)
             {
-              this_server_port = free_port_num;
-              this_server_type_num = 1;
-              SubServerToClientInteraction (free_port_num);
+              char port_str[20];
+              snprintf (port_str, sizeof (port_str) / sizeof (port_str[0]),
+                        "%d", free_port_num);
+              execl (k_exec_path_name, k_exec_name, port_str, (char *)NULL);
+              PrintErrorStrAndExit ("execl", __LINE__);
             }
           else if (fork_val == -1)
             PrintErrorStrAndExit ("fork", __LINE__);
@@ -305,31 +201,41 @@ PrepareToExit ()
 {
 
   CheckError (printf ("\n[ %9s [%d]: preparing to exit... ]\n",
-                      k_servers_types_str[this_server_type_num],
-                      k_server_main_port + this_server_port),
+                      k_server_types_str[SERV_T_MAIN_SERV],
+                      k_server_main_port),
               "printf", __LINE__);
 
   CheckError (close (main_server_fd), "close", __LINE__);
 
-  free (processes_pid);
+  CheckError (printf ("\n[ %9s [%d]: close all sub servers... ]\n",
+                      k_server_types_str[SERV_T_MAIN_SERV],
+                      k_server_main_port),
+              "printf", __LINE__);
 
-  mq_close (message_queue_of_server);
-  if (this_server_type_num == 0) // if it's MAIN SERV
+  for (int i = 0; i < processes_amount; i++)
     {
-      mq_unlink (k_message_queue_name);
+      CheckError (kill (processes_pid[i], SIGINT), "kill", __LINE__);
+      CheckError (wait (NULL), "wait", __LINE__);
     }
 
+  mq_close (message_queue_of_server);
+  mq_unlink (k_message_queue_name);
+
+  free (processes_pid);
+
   CheckError (printf ("[ %9s [%d]: exit complete, bye-bye! ]\n\n",
-                      k_servers_types_str[this_server_type_num],
-                      k_server_main_port + this_server_port),
+                      k_server_types_str[SERV_T_MAIN_SERV],
+                      k_server_main_port),
               "printf", __LINE__);
 }
 
 int
 main ()
 {
-  atexit (PrepareToExit);
-  signal (SIGINT, SigExit);
+  if (atexit (PrepareToExit) != 0)
+    PrintErrorStrAndExit ("atexit", __LINE__);
+  if (signal (SIGINT, SigExit) == SIG_ERR)
+    PrintErrorStrAndExit ("signal", __LINE__);
 
   InitMainServer ();
 

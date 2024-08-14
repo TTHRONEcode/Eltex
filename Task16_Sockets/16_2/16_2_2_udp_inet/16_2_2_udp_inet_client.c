@@ -5,15 +5,22 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "./16_2_1_udp_inet.h"
+#include "./16_2_2_udp_inet_header.h"
+
+int this_client_port;
+
+static void
+PrintErrorStrAndExit (char *err_str, int caller_line)
+{
+  err (EXIT_FAILURE, "[ %9s [%d]: %s: %d ]", k_server_types_str[SERV_T_CLIENT],
+       k_server_main_port + this_client_port, err_str, caller_line);
+}
 
 static void
 CheckError (int err_int, char *err_str, int caller_line)
 {
   if (err_int < 0)
-    {
-      err (EXIT_FAILURE, "%s: %d", err_str, caller_line);
-    }
+    PrintErrorStrAndExit (err_str, caller_line);
 }
 
 static void
@@ -67,7 +74,6 @@ InitConnectionToSubServer ()
 
   char *msg_send = "Hi!!";
   char msg_recv[STR_SIZE_MAX];
-  int port_offset_receive = 0;
 
   socklen_t len = sizeof (struct sockaddr);
 
@@ -84,11 +90,11 @@ InitConnectionToSubServer ()
               __LINE__);
 
   // receive the port offset to connect to a sub server
-  CheckError (recv (sock_fd, &port_offset_receive, sizeof (int), 0), "recv",
+  CheckError (recv (sock_fd, &this_client_port, sizeof (int), 0), "recv",
               __LINE__);
 
   // reconnect to a sub server via new port
-  serv.sin_port = htons (k_server_main_port + port_offset_receive);
+  serv.sin_port = htons (k_server_main_port + this_client_port);
   CheckError (connect (sock_fd, (struct sockaddr *)&serv, len), "connect",
               __LINE__);
 
