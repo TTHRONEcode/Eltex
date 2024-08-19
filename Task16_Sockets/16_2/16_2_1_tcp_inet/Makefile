@@ -1,5 +1,5 @@
 CC = gcc
-compile_flags = -g #-Werror -pedantic-errors -Wall -Wextra -Wpedantic //TODO
+compile_flags = -Werror -pedantic-errors -Wall -Wextra -Wpedantic
 targetS = 16_2_1_tcp_inet_server
 targetC = 16_2_1_tcp_inet_client
 

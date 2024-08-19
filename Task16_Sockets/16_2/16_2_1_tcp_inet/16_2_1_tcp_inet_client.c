@@ -65,9 +65,6 @@ main ()
   struct sockaddr_in serv;
   int sock_fd;
 
-  char *msg_send = "Hi!!";
-  char msg_recv[STR_SIZE_MAX];
-
   socklen_t len = sizeof (struct sockaddr);
 
   serv.sin_family = AF_INET;

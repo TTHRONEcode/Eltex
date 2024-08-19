@@ -36,6 +36,8 @@ ThreadSocketClient (void *args)
   int loc_sock_fd = ((int *)args)[0], loc_clients_fd = ((int *)args)[1],
       this_proc_num = ((int *)args)[2];
 
+  (void)loc_sock_fd;
+
   char msg_recv[STR_SIZE_MAX] = { 0 };
 
   CheckError (printf ("\n*Process №%d is getting started with fd %d*\n",
@@ -78,8 +80,6 @@ ThreadSocketClient (void *args)
 static void
 SocketHandler ()
 {
-  pid_t fork_val = 0;
-  char message_buf[STR_SIZE_MAX] = { 0 };
   int proc_count = 0, clients_fd = 0;
 
   do
