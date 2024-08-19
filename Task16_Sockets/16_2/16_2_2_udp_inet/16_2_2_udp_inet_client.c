@@ -64,6 +64,8 @@ ServerInteraction (int sock_fd)
       typed_char[0] = 0;
     }
   while (1);
+
+  CheckError (close (sock_fd), "close", __LINE__);
 }
 
 static int

@@ -81,6 +81,8 @@ InteractWithSubServerViaSockFd (int sock_fd)
       msg_send[0] = 0;
     }
   while (1);
+
+  CheckError (close (sock_fd), "close", __LINE__);
 }
 
 static void
