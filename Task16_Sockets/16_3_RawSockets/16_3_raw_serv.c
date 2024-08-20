@@ -8,6 +8,8 @@
 
 #include "./16_3_raw.h"
 
+#define N 3
+
 static void
 CheckError (int err_n, char *err_str, int line)
 {
@@ -24,7 +26,7 @@ main ()
   int sock_fd;
 
   char msg_recv[STR_SIZE_MAX] = { 0 };
-  char msg_send_change[3] = "___";
+  char msg_send_change[N] = "___";
 
   socklen_t len = sizeof (struct sockaddr);
 
@@ -43,7 +45,7 @@ main ()
   CheckError (printf ("*СООБЩЕНИЕ ОТ КЛИЕНТА: %s\n", msg_recv), "printf",
               __LINE__);
 
-  strncpy (msg_recv + 2, msg_send_change, 3);
+  memcpy (msg_recv + 2, msg_send_change, N);
 
   CheckError (sendto (sock_fd, msg_recv, STR_SIZE_MAX, 0,
                       (struct sockaddr *)&client, len),
