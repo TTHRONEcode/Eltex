@@ -1,5 +1,5 @@
 CC = gcc
-compile_flags = -Werror -pedantic-errors -Wall -Wextra -Wpedantic
+compile_flags = -O2 -Werror -pedantic-errors -Wall -Wextra -Wpedantic
 targetS = 16_3_raw_serv
 targetC = 16_3_raw_client
 
