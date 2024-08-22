@@ -1,7 +1,7 @@
 CC = gcc
 compile_flags = -O2 -Werror -pedantic-errors -Wall -Wextra -Wpedantic
-targetS = 16_3_raw_serv
-targetC = 16_3_raw_client
+targetS = 16_4_raw_udp_serv
+targetC = 16_4_raw_udp_client
 
 COMPMAKE = make
 REMOVE = rm -rf *.o $(targetS) $(targetC)
