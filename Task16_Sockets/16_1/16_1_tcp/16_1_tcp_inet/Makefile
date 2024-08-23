@@ -1,7 +1,7 @@
 CC = gcc
 compile_flags = -Werror -pedantic-errors -Wall -Wextra -Wpedantic
-targetS = 16_1_inet_serv
-targetC = 16_1_inet_client
+targetS = ./16_1_tcp_inet_server
+targetC = ./16_1_tcp_inet_client
 
 COMPMAKE = make
 REMOVE = rm -rf *.o $(targetS) $(targetC)
