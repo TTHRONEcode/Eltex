@@ -24,7 +24,8 @@ int main() {
   socklen_t len = sizeof(struct sockaddr_un);
 
   sockaddr_un_server.sun_family = AF_LOCAL;
-  strcpy(sockaddr_un_server.sun_path, "/tmp/AF_LOCAL");
+  strncpy(sockaddr_un_server.sun_path, "/tmp/AF_LOCAL",
+          sizeof(sockaddr_un_server.sun_path) - 1);
 
   CheckError(server_sock_fd = socket(AF_LOCAL, SOCK_STREAM, 0), "socket",
              __LINE__);
@@ -42,7 +43,7 @@ int main() {
              "recv", __LINE__);
 
   CheckError(
-      getsockname(client_sock_fd, (struct sockaddr *)&sockaddr_un_client, &len),
+      getpeername(client_sock_fd, (struct sockaddr *)&sockaddr_un_client, &len),
       "getsockname", __LINE__);
 
   CheckError(printf("CLIENT PATH: %s\n"

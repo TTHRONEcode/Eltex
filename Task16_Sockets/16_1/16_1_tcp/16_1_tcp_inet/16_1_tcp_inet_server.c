@@ -43,6 +43,10 @@ int main() {
   CheckError(recv(clients_sock_fd, (char *)msg_recv_send, STR_SIZE_MAX, 0),
              "recv", __LINE__);
 
+  CheckError(getpeername(clients_sock_fd,
+                         (struct sockaddr *)&sockaddr_in_client, &len),
+             "getpeername", __LINE__);
+
   if (inet_ntop(AF_INET, &sockaddr_in_client.sin_addr.s_addr, client_ip_buf,
                 STR_SIZE_MAX) == NULL)
     err(EXIT_FAILURE, "inet_ntop");
