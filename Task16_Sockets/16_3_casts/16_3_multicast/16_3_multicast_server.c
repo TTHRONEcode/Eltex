@@ -1,9 +1,7 @@
 #include <arpa/inet.h>
 #include <err.h>
 #include <netinet/in.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -31,7 +29,7 @@ int main() {
 
   CheckError(
       sendto(sock_fd, msg_send, STR_SIZE_MAX, 0, (struct sockaddr *)&serv, len),
-      "recvfrom", __LINE__);
+      "sendto", __LINE__);
 
   CheckError(close(sock_fd), "close", __LINE__);
 

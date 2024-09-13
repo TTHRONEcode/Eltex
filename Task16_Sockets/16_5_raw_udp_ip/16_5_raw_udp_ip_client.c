@@ -45,7 +45,7 @@ int main() {
   ip_header.protocol = IPPROTO_UDP;
   ip_header.check = 0; // заполняется автоматически
   ip_header.saddr = 0; // заполняется автоматически, если 0
-  ip_header.daddr = inet_addr("127.0.0.1");
+  ip_header.daddr = htonl(INADDR_LOOPBACK);
 
   // udp struct
   udp_header.source = htons(PORT_CLIENT);
@@ -77,7 +77,11 @@ int main() {
 
     // перепрыгиваем ip-заголовок, чтобы найти порт источника
     if (ntohs(*((unsigned short *)(msg_recv + sizeof(ip_header)))) ==
-        PORT_SERVER)
+            PORT_SERVER &&
+        // проверяем ip-адресс отправителя
+        ntohl(*((unsigned int *)(msg_recv + sizeof(ip_header) -
+                                 sizeof(ip_header.saddr) -
+                                 sizeof(ip_header.daddr)))) == INADDR_LOOPBACK)
       break;
   }
   CheckError(printf("*Сообщение от сервера!: %s*\n", msg_recv + 28), "printf",

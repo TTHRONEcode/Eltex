@@ -36,8 +36,9 @@ int main() {
 
   CheckError(sock_fd = socket(AF_INET, SOCK_DGRAM, 0), "socket", __LINE__);
 
-  setsockopt(sock_fd, IPPROTO_TP, IP_ADD_MEMBERSHIP, (int *)&mreqn,
-             sizeof(mreqn));
+  CheckError(setsockopt(sock_fd, IPPROTO_TP, IP_ADD_MEMBERSHIP, (int *)&mreqn,
+                        sizeof(mreqn)),
+             "setsockopt", __LINE__);
 
   CheckError(bind(sock_fd, (struct sockaddr *)&serv, len), "bind", __LINE__);
 
