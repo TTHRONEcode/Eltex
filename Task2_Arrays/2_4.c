@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 
-#define N 7
+#define N 5
 
 int main() {
 
@@ -22,7 +22,7 @@ int main() {
   for (int i = 0; i < N / 2; i++) {
 
     // горизонтальное заполнение вправо
-    for (columns = 0; columns < N - offset; columns++) {
+    for (columns = offset; columns < N - offset; columns++) {
       matrix[lines][columns] = count;
       count++;
     }
@@ -38,7 +38,7 @@ int main() {
     lines--;
 
     // горизонтальное заполнение влево
-    for (columns = N - offset - 1; columns >= offset; columns--) {
+    for (columns = N - offset - 2; columns >= offset; columns--) {
       matrix[lines][columns] = count;
       count++;
     }
